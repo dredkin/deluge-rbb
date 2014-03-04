@@ -129,7 +129,7 @@ class GtkUI(GtkPluginBase):
 
     def disable(self):
         self.error = None
-        component.get("Preferences").remove_page("remotebrowsebutton")
+        component.get("Preferences").remove_page("Browse Button")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
         self.deleteButton()
@@ -152,7 +152,7 @@ class GtkUI(GtkPluginBase):
 
     def initializeGUI(self):
         self.glade = gtk.glade.XML(common.get_resource("config.glade"))
-        component.get("Preferences").add_page("remotebrowsebutton", self.glade.get_widget("prefs_box"))
+        component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
         self.addButton()
