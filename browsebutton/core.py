@@ -50,7 +50,7 @@ DEFAULT_PREFS = {
 
 class Core(CorePluginBase):
     def enable(self):
-        self.config = deluge.configmanager.ConfigManager("browse_button.conf", DEFAULT_PREFS)
+        self.config = deluge.configmanager.ConfigManager("browsebutton.conf", DEFAULT_PREFS)
 
     def disable(self):
         pass

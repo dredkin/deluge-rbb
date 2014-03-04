@@ -95,7 +95,7 @@ class BrowseDialog:
     def refillList(self, subfolder):
         self.liststore.clear()
 #        try:
-        client.browse_button.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
+        client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
         self.selectedfolder = results[0]

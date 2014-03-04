@@ -39,4 +39,4 @@
 
 def get_resource(filename):
     import pkg_resources, os
-    return pkg_resources.resource_filename("browse_button", os.path.join("data", filename))
+    return pkg_resources.resource_filename("browsebutton", os.path.join("data", filename))

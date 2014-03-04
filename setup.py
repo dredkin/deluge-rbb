@@ -39,7 +39,7 @@
 
 from setuptools import setup
 
-__plugin_name__ = "browse_button"
+__plugin_name__ = "BrowseButton"
 __author__ = "dredkin"
 __author_email__ = "dmitry.redkin@gmail.com"
 __version__ = "0.1.1"
