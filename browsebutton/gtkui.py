@@ -81,11 +81,12 @@ class BrowseDialog:
         self.dialog.set_transient_for(parent)
         self.label = self.builder.get_object("current_folder_label")
         self.liststore = gtk.ListStore(gtk.gdk.Pixbuf, str)
-        iconview = self.builder.get_object("iconview1")
-        iconview.set_model(self.liststore)
-        iconview.set_pixbuf_column(0)
-        iconview.set_text_column(1)
-        iconview.connect("item-activated", self.subfolder_activated)
+        self.iconview = self.builder.get_object("iconview1")
+        self.iconview.set_model(self.liststore)
+        self.iconview.set_pixbuf_column(0)
+        self.iconview.set_text_column(1)
+        self.iconview.set_item_width(300)
+        self.iconview.connect("item-activated", self.subfolder_activated)
         self.refillList("")
         #        self.dialog.connect("delete-event", self._on_delete_event)
         
@@ -107,6 +108,8 @@ class BrowseDialog:
         for folder in results[2]:
             pixbuf = gtk.icon_theme_get_default().load_icon("folder", 24, 0)
             self.liststore.append([pixbuf, folder])    
+        #self.iconview.set_item_width(-1)
+        
 
     def subfolder_activated(self, widget, path):
         subfolder = self.liststore.get_value(self.liststore.get_iter(path),1)
