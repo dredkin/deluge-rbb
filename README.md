@@ -1,4 +1,9 @@
-deluge-rbb
+Remote "browse" button for Deluge
 ==========
 
-Plugin adding "Browse" button to Add torrent dialog in client-server mode
+This is a plugin for [Deluge](http://deluge-torrent.org) torrent client.
+By default, when started in client-server mode, Deluge has no option to choose destination folder for download, you have to enter it by hand.
+The **Remote "browse" button** plugin eliminates this drawback by adding *"browse.."* button to Add torrent dialog. 
+
+You can download .egg file for python 2.7 [here]
+If you have another version of python, make an .egg file by running build.sh or build.bat depending on platform.
