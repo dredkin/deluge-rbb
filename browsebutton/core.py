@@ -78,8 +78,13 @@ class Core(CorePluginBase):
             folder = os.path.expanduser("~")
         folder = os.path.join(folder,subfolder)
         absolutepath = os.path.normpath(folder)
+        if not os.path.isdir(absolutepath):
+            absolutepath = os.path.expanduser("~")
         isroot = os.path.dirname(absolutepath) == absolutepath
-        list = os.listdir(folder)
+        try:
+            list = os.listdir(folder)
+        except:
+            list = []
         subfolders = []
         for f in list:
             if os.path.isdir(os.path.join(folder,f)):
