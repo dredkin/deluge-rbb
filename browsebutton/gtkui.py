@@ -203,9 +203,9 @@ class GtkUI(GtkPluginBase):
     def findAddDialog(self):
         if self.addDialog is None:
             dialog = component.get("AddTorrentDialog")
-        if dialog is None:
-            self.error = "AddTorrentDialog not found!"
-        self.addDialog = dialog.dialog
+            if dialog is None:
+               self.error = "AddTorrentDialog not found!"
+            self.addDialog = dialog.dialog
         return self.addDialog
 
     def findHbox14(self):
