@@ -118,10 +118,13 @@ class BrowseDialog:
 class GtkUI(GtkPluginBase):
     error = None
     addDialog = None
+#    storageDialog = None
     addBrowseButton = None
     addEditbox = None
-    moveBrowseButton = None
-    moveEditbox = None
+    completedBrowseButton = None
+    completedEditbox = None
+#    moveBrowseButton = None
+#    moveEditbox = None
     def enable(self):
         self.error = importError
         if self.error is None:
@@ -136,9 +139,12 @@ class GtkUI(GtkPluginBase):
         self.deleteButton(self.addBrowseButton)
         self.addBrowseButton = None
         self.handleError()
-        self.deleteButton(self.moveBrowseButton)
-        self.moveBrowseButton = None
+        self.deleteButton(self.completedBrowseButton)
+        self.completedBrowseButton = None
         self.handleError()
+#        self.deleteButton(self.moveBrowseButton)
+#        self.moveBrowseButton = None
+#        self.handleError()
 
     def handleError(self):
         if self.error is not None:
@@ -165,12 +171,14 @@ class GtkUI(GtkPluginBase):
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
         if self.addBrowseButton is None:
-            self.addBrowseButton = self.addButton(self.findHbox14(), self.on_browse_button_clicked)
+            self.addBrowseButton = self.addButton(self.findAddEditBox(), self.on_browse_button_clicked)
         self.handleError
-        if self.moveBrowseButton is None:
-            self.moveBrowseButton = self.addButton(self.findHboxForMove(), self.on_browse_button_clicked)
+        if self.completedBrowseButton is None:
+            self.completedBrowseButton = self.addButton(self.findCompletedEditBox(), self.on_browse_button_clicked)
         self.handleError
-
+#        if self.moveBrowseButton is None: does not work :(
+#            self.moveBrowseButton = self.addButton(self.findMoveEditBox(), self.on_browse_button_clicked)
+#        self.handleError
 
     def addButton(self, editbox, onClickEvent):
         """Adds a Button to the editbox inside hbox container."""
@@ -204,29 +212,40 @@ class GtkUI(GtkPluginBase):
         if self.addDialog is None:
             dialog = component.get("AddTorrentDialog")
             if dialog is None:
-               self.error = "AddTorrentDialog not found!"
+                self.error = "AddTorrentDialog not found!"
+                return None
             self.addDialog = dialog.dialog
         return self.addDialog
 
-    def findHbox14(self):
-        if self.findAddDialog() is None:
+#    def findMoveStorageDialog(self):
+#        if self.storageDialog is None:
+#            menu = component.get("MenuBar")
+#            if menu is None:
+#                self.error = "MenuBar not found!"
+#                return None
+#            dialog = menu.move_storage_dialog.dialog
+#        return self.storageDialog
+#
+    def findEditor(self, dialog, editbox, id):
+        if dialog is None:
             return None
-        if self.addEditbox is None:
-            self.addEditbox = findwidget(self.addDialog,'entry_download_path')
-        if self.addEditbox is None:
-            self.error = "entry_download_path not found!"
-            return None
+        if editbox is None:
+            editbox = findwidget(dialog, id)
+        if editbox is None:
+            self.error = id + " not found!"
+        return editbox
+ 
+    def findAddEditBox(self):
+        self.addEditbox = self.findEditor(self.findAddDialog(), self.addEditbox, 'entry_download_path')
         return self.addEditbox
+        
+    def findCompletedEditBox(self):
+        self.completedEditbox = self.findEditor(self.findAddDialog(), self.completedEditbox, 'entry_move_completed_path')
+        return self.completedEditbox
 
-    def findHboxForMove(self):
-        if self.findAddDialog() is None:
-            return None
-        if self.moveEditbox is None:
-            self.moveEditbox = findwidget(self.addDialog,'entry_move_completed_path')
-        if self.moveEditbox is None:
-            self.error = "entry_move_completed_path not found!"
-            return None
-        return self.moveEditbox
+#    def findMoveEditBox(self):
+#        self.moveEditbox = self.findEditor(self.findMoveStorageDialog(), self.moveEditbox, 'entry_destination')
+#        return self.moveEditbox
 
     def chooseFolder(self, editbox, parent):
         dialog = BrowseDialog(editbox.get_text(), parent)
@@ -238,5 +257,5 @@ class GtkUI(GtkPluginBase):
     def on_browse_button_clicked(self, widget):
         if widget == self.addBrowseButton:
             return self.chooseFolder(self.addEditbox, self.addDialog)
-        elif widget == self.moveBrowseButton:
-            return self.chooseFolder(self.moveEditbox, self.addDialog)
+        elif widget == self.completedBrowseButton:
+            return self.chooseFolder(self.completedEditbox, self.addDialog)
