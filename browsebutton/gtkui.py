@@ -1,8 +1,8 @@
 #
 # gtkui.py
 #
-# Copyright (C) 2009 dredkin <dmitry.redkin@gmail.com>
-#
+# Copyright (C) 2014 dredkin <dmitry.redkin@gmail.com>
+
 # Basic plugin template created by:
 # Copyright (C) 2008 Martijn Voncken <mvoncken@gmail.com>
 # Copyright (C) 2007-2009 Andrew Resch <andrewresch@gmail.com>
@@ -50,7 +50,7 @@ try:
     import pkg_resources
     import common
 except:
-    importError = "package setuptools is required!"
+    importError = "Install package setuptools to run this plugin!"
 
 
 def findwidget(container, name):
@@ -117,24 +117,33 @@ class BrowseDialog:
     
 class GtkUI(GtkPluginBase):
     error = None
-    button = None
-    editbox = None
     addDialog = None
+    addBrowseButton = None
+    addEditbox = None
+    moveBrowseButton = None
+    moveEditbox = None
     def enable(self):
         self.error = importError
         if self.error is None:
             self.initializeGUI()
-        if self.error is not None:
-            showMessage(None, self.error)
+        self.handleError()
 
     def disable(self):
         self.error = None
         component.get("Preferences").remove_page("Browse Button")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
-        self.deleteButton()
+        self.deleteButton(self.addBrowseButton)
+        self.addBrowseButton = None
+        self.handleError()
+        self.deleteButton(self.moveBrowseButton)
+        self.moveBrowseButton = None
+        self.handleError()
+
+    def handleError(self):
         if self.error is not None:
             showMessage(None, self.error)
+        self.error = None
 
     def on_apply_prefs(self):
         log.debug("applying prefs for remotebrowsebutton")
@@ -155,54 +164,79 @@ class GtkUI(GtkPluginBase):
         component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
-        self.addButton()
+        if self.addBrowseButton is None:
+            self.addBrowseButton = self.addButton(self.findHbox14(), self.on_browse_button_clicked)
+        self.handleError
+        if self.moveBrowseButton is None:
+            self.moveBrowseButton = self.addButton(self.findHboxForMove(), self.on_browse_button_clicked)
+        self.handleError
 
-    def addButton(self):
-        """Adds a Button to remote Add torrent dialog."""
-        if self.button is None:
-            hbox = self.findHbox14()
-            if hbox is None:
+
+    def addButton(self, editbox, onClickEvent):
+        """Adds a Button to the editbox inside hbox container."""
+        if editbox is None:
+            return None
+        hbox = editbox.get_parent()
+        if hbox is None:
+            self.error = "hbox not found!"
+            return None
+        if hbox is None:
+            return None
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_DIRECTORY,  gtk.ICON_SIZE_BUTTON)
+        button = gtk.Button()
+        button.set_image(image)
+        button.set_label("Browse..")
+        button.set_size_request(50,-1)
+        hbox.pack_end(button)
+        button.show()
+        button.connect("clicked", onClickEvent)
+        return button
+
+    def deleteButton(self, button):
+        if button is not None:
+            if button.parent is None:
                 return None
-            image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_DIRECTORY,  gtk.ICON_SIZE_BUTTON)
-            self.button = gtk.Button()
-            self.button.set_image(image)
-            self.button.set_label("Browse..")
-            self.button.set_size_request(50,-1)
-            hbox.pack_end(self.button)
-            self.button.show()
-            self.button.connect("clicked", self.on_browse_button_clicked)
+            button.parent.remove(button)
         return True
 
-    def deleteButton(self):
-        if self.button is not None:
-            hbox = self.findHbox14()
-            if hbox is None:
-                return None
-            hbox.remove(self.button)
-            self.button = None
-        return True
-
-    def findHbox14(self):
-        dialog = component.get("AddTorrentDialog")
+    def findAddDialog(self):
+        if self.addDialog is None:
+            dialog = component.get("AddTorrentDialog")
         if dialog is None:
             self.error = "AddTorrentDialog not found!"
-            return None
         self.addDialog = dialog.dialog
-        if self.editbox is None:
-            self.editbox = findwidget(self.addDialog,'entry_download_path')
-        if self.editbox is None:
+        return self.addDialog
+
+    def findHbox14(self):
+        if self.findAddDialog() is None:
+            return None
+        if self.addEditbox is None:
+            self.addEditbox = findwidget(self.addDialog,'entry_download_path')
+        if self.addEditbox is None:
             self.error = "entry_download_path not found!"
             return None
-        hbox = self.editbox.get_parent()
-        if hbox is None:
-            self.error = "hbox14 not found!"
-            return None
-        return hbox
+        return self.addEditbox
 
-    def on_browse_button_clicked(self, widget):
-        dialog = BrowseDialog(self.editbox.get_text(), self.addDialog)
+    def findHboxForMove(self):
+        if self.findAddDialog() is None:
+            return None
+        if self.moveEditbox is None:
+            self.moveEditbox = findwidget(self.addDialog,'entry_move_completed_path')
+        if self.moveEditbox is None:
+            self.error = "entry_move_completed_path not found!"
+            return None
+        return self.moveEditbox
+
+    def chooseFolder(self, editbox, parent):
+        dialog = BrowseDialog(editbox.get_text(), parent)
         id = dialog.dialog.run()
         if id > 0:
-            self.editbox.set_text(dialog.selectedfolder)
+            editbox.set_text(dialog.selectedfolder)
         dialog.dialog.destroy()
+
+    def on_browse_button_clicked(self, widget):
+        if widget == self.addBrowseButton:
+            return self.chooseFolder(self.addEditbox, self.addDialog)
+        elif widget == self.moveBrowseButton:
+            return self.chooseFolder(self.moveEditbox, self.addDialog)

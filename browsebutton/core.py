@@ -1,7 +1,7 @@
 #
 # core.py
 #
-# Copyright (C) 2009 dredkin <dmitry.redkin@gmail.com>
+# Copyright (C) 2014 dredkin <dmitry.redkin@gmail.com>
 #
 # Basic plugin template created by:
 # Copyright (C) 2008 Martijn Voncken <mvoncken@gmail.com>
