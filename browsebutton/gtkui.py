@@ -71,7 +71,10 @@ def showMessage(parent, message):
     md.format_secondary_text('Remote browse button plugin');
     md.run()
     md.destroy()
-    
+
+def caseInsensitive(key):
+    return key.lower()
+
 class BrowseDialog:
     def __init__(self, path, parent):
         self.selectedfolder = path
@@ -102,17 +105,19 @@ class BrowseDialog:
         if results[1]:
             pixbuf = gtk.icon_theme_get_default().load_icon("go-up", 24, 0)
             self.liststore.append([pixbuf, ".."])    
-            
+        subfolders = [] 
         for folder in results[2]:
+            subfolders.append(folder)
+        subfolders.sort(key=caseInsensitive)
+        for folder in subfolders:
             pixbuf = gtk.icon_theme_get_default().load_icon("folder", 24, 0)
             self.liststore.append([pixbuf, folder])    
         #self.iconview.set_item_width(-1)
-        
 
     def subfolder_activated(self, widget, path):
         subfolder = self.liststore.get_value(self.liststore.get_iter(path),1)
         self.refillList(subfolder)
-    
+
 class GtkUI(GtkPluginBase):
     error = None
     buttons = None
