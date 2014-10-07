@@ -88,14 +88,12 @@ class BrowseDialog:
         self.iconview.set_item_width(300)
         self.iconview.connect("item-activated", self.subfolder_activated)
         self.refillList("")
-        #        self.dialog.connect("delete-event", self._on_delete_event)
-        
+
     def on_folder_double_click(self, widget):
         """"""
 
     def refillList(self, subfolder):
         self.liststore.clear()
-#        try:
         client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
@@ -117,14 +115,9 @@ class BrowseDialog:
     
 class GtkUI(GtkPluginBase):
     error = None
+    buttons = None
     addDialog = None
-#    storageDialog = None
-    addBrowseButton = None
-    addEditbox = None
-    completedBrowseButton = None
-    completedEditbox = None
-#    moveBrowseButton = None
-#    moveEditbox = None
+    mainWindow = None
     def enable(self):
         self.error = importError
         if self.error is None:
@@ -136,15 +129,10 @@ class GtkUI(GtkPluginBase):
         component.get("Preferences").remove_page("Browse Button")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
-        self.deleteButton(self.addBrowseButton)
-        self.addBrowseButton = None
-        self.handleError()
-        self.deleteButton(self.completedBrowseButton)
-        self.completedBrowseButton = None
-        self.handleError()
-#        self.deleteButton(self.moveBrowseButton)
-#        self.moveBrowseButton = None
-#        self.handleError()
+        for name in self.buttons.keys() :
+          self.deleteButton(self.buttons[name]['widget'])
+          self.buttons[name]['widget'] = None
+          self.handleError()
 
     def handleError(self):
         if self.error is not None:
@@ -170,15 +158,9 @@ class GtkUI(GtkPluginBase):
         component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
-        if self.addBrowseButton is None:
-            self.addBrowseButton = self.addButton(self.findAddEditBox(), self.on_browse_button_clicked)
+        self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': None}, 'completed' : { 'id' : 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': None},'completed_tab' : { 'id' : 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
+        self.makeButtons()
         self.handleError
-        if self.completedBrowseButton is None:
-            self.completedBrowseButton = self.addButton(self.findCompletedEditBox(), self.on_browse_button_clicked)
-        self.handleError
-#        if self.moveBrowseButton is None: does not work :(
-#            self.moveBrowseButton = self.addButton(self.findMoveEditBox(), self.on_browse_button_clicked)
-#        self.handleError
 
     def addButton(self, editbox, onClickEvent):
         """Adds a Button to the editbox inside hbox container."""
@@ -213,19 +195,19 @@ class GtkUI(GtkPluginBase):
             dialog = component.get("AddTorrentDialog")
             if dialog is None:
                 self.error = "AddTorrentDialog not found!"
-                return None
+                return False
             self.addDialog = dialog.dialog
-        return self.addDialog
+        return self.addDialog is not None
 
-#    def findMoveStorageDialog(self):
-#        if self.storageDialog is None:
-#            menu = component.get("MenuBar")
-#            if menu is None:
-#                self.error = "MenuBar not found!"
-#                return None
-#            dialog = menu.move_storage_dialog.dialog
-#        return self.storageDialog
-#
+    def findMainWindow(self):
+        if self.mainWindow is None:
+            comp = component.get("MainWindow")
+            if comp is None:
+                self.error = "MainWindow not found!"
+                return False
+            self.mainWindow = comp.window
+        return self.mainWindow is not None
+
     def findEditor(self, dialog, editbox, id):
         if dialog is None:
             return None
@@ -234,18 +216,21 @@ class GtkUI(GtkPluginBase):
         if editbox is None:
             self.error = id + " not found!"
         return editbox
- 
-    def findAddEditBox(self):
-        self.addEditbox = self.findEditor(self.findAddDialog(), self.addEditbox, 'entry_download_path')
-        return self.addEditbox
         
-    def findCompletedEditBox(self):
-        self.completedEditbox = self.findEditor(self.findAddDialog(), self.completedEditbox, 'entry_move_completed_path')
-        return self.completedEditbox
-
-#    def findMoveEditBox(self):
-#        self.moveEditbox = self.findEditor(self.findMoveStorageDialog(), self.moveEditbox, 'entry_destination')
-#        return self.moveEditbox
+    def makeButtons(self):
+        if not self.findMainWindow():
+            self.handleError()
+            return False
+        if not self.findAddDialog():
+            self.handleError()
+            return False
+        self.buttons['store']['window'] = self.addDialog
+        self.buttons['completed']['window'] = self.addDialog
+        self.buttons['completed_tab']['window'] = self.mainWindow
+        for name in self.buttons.keys() :
+          self.buttons[name]['editbox'] =  self.findEditor(self.buttons[name]['window'], self.buttons[name]['editbox'], self.buttons[name]['id'])
+          self.buttons[name]['widget'] = self.addButton(self.buttons[name]['editbox'], self.on_browse_button_clicked)
+        
 
     def chooseFolder(self, editbox, parent):
         dialog = BrowseDialog(editbox.get_text(), parent)
@@ -255,7 +240,6 @@ class GtkUI(GtkPluginBase):
         dialog.dialog.destroy()
 
     def on_browse_button_clicked(self, widget):
-        if widget == self.addBrowseButton:
-            return self.chooseFolder(self.addEditbox, self.addDialog)
-        elif widget == self.completedBrowseButton:
-            return self.chooseFolder(self.completedEditbox, self.addDialog)
+        for name in self.buttons.keys() :
+            if widget == self.buttons[name]['widget']:
+                return self.chooseFolder(self.buttons[name]['editbox'], self.buttons[name]['window'])
