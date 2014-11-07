@@ -57,7 +57,7 @@ DEFAULT_PREFS = {
 CURRENT_LOCALE = locale.getdefaultlocale()[1]
 
 def windows():
-    return os.name == "nt":
+    return os.name == "nt"
 
 class Core(CorePluginBase):
     def enable(self):
@@ -136,6 +136,6 @@ class Core(CorePluginBase):
         if windows() and isroot:
             subfolders = self.drives_list()
             absolutepath = ""
-        else
+        else:
             subfolders = self.subfolders_list(absolutepath)
         return [absolutepath.decode(CURRENT_LOCALE).encode('utf8'), isroot, subfolders, error]
