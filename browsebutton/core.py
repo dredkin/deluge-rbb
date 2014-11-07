@@ -43,10 +43,21 @@ import deluge.component as component
 import deluge.configmanager
 from deluge.core.rpcserver import export
 import os
+import locale
+import pkg_resources
+import gettext
+
+if os.name == 'nt':
+  import win32api
 
 DEFAULT_PREFS = {
     "test":"NiNiNi"
 }
+
+CURRENT_LOCALE = locale.getdefaultlocale()[1]
+
+def windows():
+    return os.name == "nt":
 
 class Core(CorePluginBase):
     def enable(self):
@@ -58,6 +69,30 @@ class Core(CorePluginBase):
     def update(self):
         pass
 
+    def drives_list(self):
+        if windows():
+            drives = win32api.GetLogicalDriveStrings()
+            return drives.split('\000')[:-1]
+        else:
+            return "/"
+            
+    def subfolders_list(self, absolutepath):
+        subfolders = []
+        try:
+            list = os.listdir(absolutepath)
+        except:
+            list = []
+        self.llog("iterating "+absolutepath)
+        self.llog("items:"+str(len(list)))
+        for f in list:
+            if os.path.isdir(os.path.join(absolutepath,f)):
+                f2 = f.decode(CURRENT_LOCALE).encode('utf8')
+                subfolders.append(f2)
+        return subfolders
+            
+    def is_root_folder(self, folder):
+        return os.path.dirname(folder) == folder
+    
     @export
     def set_config(self, config):
         """Sets the config dictionary"""
@@ -71,22 +106,36 @@ class Core(CorePluginBase):
         return self.config.config
 
     @export
+    def llog(self, line):
+        log.debug(line)
+
+    @export
     def get_folder_list(self, folder, subfolder):
         """Returns the list of subfolders for specified folder on server"""
+        error = ""
         from os.path import isfile, join
         if folder == "":
             folder = os.path.expanduser("~")
-        folder = os.path.join(folder,subfolder)
-        absolutepath = os.path.normpath(folder)
+        else:
+            folder = folder.encode(CURRENT_LOCALE)
+        self.llog("native folder"+folder)
+        self.llog("orig subfolder"+subfolder)
+        subfolder = subfolder.encode(CURRENT_LOCALE)
+        newfolder = os.path.join(folder,subfolder)
+        absolutepath = os.path.normpath(newfolder)
+        
         if not os.path.isdir(absolutepath):
+            self.llog("NOT A FOLDER!:"+absolutepath+" (normalized from "+newfolder+")")
+            error = "Cannot List Contents of "+absolutepath
             absolutepath = os.path.expanduser("~")
-        isroot = os.path.dirname(absolutepath) == absolutepath
-        try:
-            list = os.listdir(folder)
-        except:
-            list = []
-        subfolders = []
-        for f in list:
-            if os.path.isdir(os.path.join(folder,f)):
-                subfolders.append(f)
-        return [absolutepath, not isroot, subfolders]
+
+        if windows():
+            isroot = self.is_root_folder(folder) and (subfolder == "..")
+        else:
+            isroot = self.is_root_folder(absolutepath)
+        if windows() and isroot:
+            subfolders = self.drives_list()
+            absolutepath = ""
+        else
+            subfolders = self.subfolders_list(absolutepath)
+        return [absolutepath.decode(CURRENT_LOCALE).encode('utf8'), isroot, subfolders, error]

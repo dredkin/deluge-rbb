@@ -92,26 +92,28 @@ class BrowseDialog:
         self.iconview.connect("item-activated", self.subfolder_activated)
         self.refillList("")
 
-    def on_folder_double_click(self, widget):
-        """"""
-
     def refillList(self, subfolder):
-        self.liststore.clear()
+        log.debug("subfolder "+ subfolder)
         client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
+        if results[3]:
+            showMessage(None, results[3])
+            return
+        self.liststore.clear()
         self.selectedfolder = results[0]
+        log.debug("selected folder"+self.selectedfolder)
         self.label.set_label(self.selectedfolder)
-        if results[1]:
+        if not results[1]:
             pixbuf = gtk.icon_theme_get_default().load_icon("go-up", 24, 0)
-            self.liststore.append([pixbuf, ".."])    
+            self.liststore.append([pixbuf, ".."])
         subfolders = [] 
         for folder in results[2]:
             subfolders.append(folder)
         subfolders.sort(key=caseInsensitive)
         for folder in subfolders:
             pixbuf = gtk.icon_theme_get_default().load_icon("folder", 24, 0)
-            self.liststore.append([pixbuf, folder])    
+            self.liststore.append([pixbuf, folder])
         #self.iconview.set_item_width(-1)
 
     def subfolder_activated(self, widget, path):
@@ -163,7 +165,9 @@ class GtkUI(GtkPluginBase):
         component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
-        self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': None}, 'completed' : { 'id' : 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': None},'completed_tab' : { 'id' : 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
+        self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': None}, \
+                     'completed' : { 'id' : 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': None}, \
+                 'completed_tab' : { 'id' : 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
         self.makeButtons()
         self.handleError
 
