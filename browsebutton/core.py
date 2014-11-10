@@ -47,7 +47,10 @@ import locale
 import pkg_resources
 import gettext
 
-if os.name == 'nt':
+def windows():
+    return os.name == "nt"
+
+if windows():
   import win32api
 
 DEFAULT_PREFS = {
@@ -56,14 +59,12 @@ DEFAULT_PREFS = {
 
 CURRENT_LOCALE = locale.getdefaultlocale()[1]
 
-def windows():
-    return os.name == "nt"
-
 class Core(CorePluginBase):
     def enable(self):
         self.config = deluge.configmanager.ConfigManager("browsebutton.conf", DEFAULT_PREFS)
 
     def disable(self):
+        #self.config.save()
         pass
 
     def update(self):
@@ -82,8 +83,7 @@ class Core(CorePluginBase):
             list = os.listdir(absolutepath)
         except:
             list = []
-        self.llog("iterating "+absolutepath)
-        self.llog("items:"+str(len(list)))
+        log.debug("RBB:iterating "+absolutepath)
         for f in list:
             if os.path.isdir(os.path.join(absolutepath,f)):
                 f2 = f.decode(CURRENT_LOCALE).encode('utf8')
@@ -106,26 +106,25 @@ class Core(CorePluginBase):
         return self.config.config
 
     @export
-    def llog(self, line):
+    def serverlog(self, line):
         log.debug(line)
 
     @export
     def get_folder_list(self, folder, subfolder):
         """Returns the list of subfolders for specified folder on server"""
         error = ""
-        from os.path import isfile, join
         if folder == "":
             folder = os.path.expanduser("~")
         else:
             folder = folder.encode(CURRENT_LOCALE)
-        self.llog("native folder"+folder)
-        self.llog("orig subfolder"+subfolder)
+        log.debug("RBB:native folder"+folder)
+        log.debug("RBB:orig subfolder"+subfolder)
         subfolder = subfolder.encode(CURRENT_LOCALE)
         newfolder = os.path.join(folder,subfolder)
         absolutepath = os.path.normpath(newfolder)
         
         if not os.path.isdir(absolutepath):
-            self.llog("NOT A FOLDER!:"+absolutepath+" (normalized from "+newfolder+")")
+            log.info("RBB:NOT A FOLDER!:"+absolutepath+" (normalized from "+newfolder+")")
             error = "Cannot List Contents of "+absolutepath
             absolutepath = os.path.expanduser("~")
 

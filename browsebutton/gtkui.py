@@ -76,18 +76,21 @@ def caseInsensitive(key):
     return key.lower()
 
 class BrowseDialog:
-    def __init__(self, path, parent):
+    def __init__(self, path, recent, parent):
         self.selectedfolder = path
         self.builder = gtk.Builder()
         self.builder.add_from_file(common.get_resource('folder_browse_dialog.glade'))
         self.dialog = self.builder.get_object("browse_folders_dialog")
         self.dialog.set_transient_for(parent)
+
         self.recentliststore = gtk.ListStore(str)
         self.label = self.builder.get_object("selected_folder")
         self.label.set_model(self.recentliststore)
         cell = gtk.CellRendererText()
         self.label.pack_start(cell, True)
         self.label.add_attribute(cell, "text", 0)
+        self.handler_id = self.label.connect("changed", self.recent_chosed)
+
         self.liststore = gtk.ListStore(gtk.gdk.Pixbuf, str)
         self.iconview = self.builder.get_object("iconview1")
         self.iconview.set_model(self.liststore)
@@ -96,9 +99,10 @@ class BrowseDialog:
         self.iconview.set_item_width(300)
         self.iconview.connect("item-activated", self.subfolder_activated)
         self.refillList("")
+        self.recent = recent
 
     def refillList(self, subfolder):
-        log.debug("subfolder "+ subfolder)
+        log.debug("RBB:refillList selectedfolder="+self.selectedfolder+";subfolder="+ subfolder)
         client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
@@ -107,10 +111,15 @@ class BrowseDialog:
             return
         self.liststore.clear()
         self.selectedfolder = results[0]
-        log.debug("selected folder"+self.selectedfolder)
+        log.debug("RBB:callback selectedfolder="+self.selectedfolder)
+        self.label.handler_block(self.handler_id)
         self.recentliststore.clear()
+        for folder in self.recent:
+            self.recentliststore.append([folder])
         self.recentliststore.prepend([self.selectedfolder])
         self.label.set_active(0)
+        self.label.handler_unblock(self.handler_id)
+
         if not results[1]:
             pixbuf = gtk.icon_theme_get_default().load_icon("go-up", 24, 0)
             self.liststore.append([pixbuf, ".."])
@@ -126,12 +135,20 @@ class BrowseDialog:
     def subfolder_activated(self, widget, path):
         subfolder = self.liststore.get_value(self.liststore.get_iter(path),1)
         self.refillList(subfolder)
-
+        
+    def recent_chosed(self, combobox):
+        model = combobox.get_model()
+        index = combobox.get_active()
+        if index != None:
+            self.selectedfolder = str(model[index][0])
+            self.refillList("")
+        
 class GtkUI(GtkPluginBase):
     error = None
     buttons = None
     addDialog = None
     mainWindow = None
+    recent = []
     def enable(self):
         self.error = importError
         if self.error is None:
@@ -154,7 +171,7 @@ class GtkUI(GtkPluginBase):
         self.error = None
 
     def on_apply_prefs(self):
-        log.debug("applying prefs for remotebrowsebutton")
+        log.debug("RBB:applying prefs for remotebrowsebutton")
         config = {
             "test":self.glade.get_widget("txt_test").get_text()
         }
@@ -164,8 +181,25 @@ class GtkUI(GtkPluginBase):
         client.remotebrowsebutton.get_config().addCallback(self.cb_get_config)
 
     def cb_get_config(self, config):
-        "callback for on show_prefs"
+        """callback for on show_prefs"""
         self.glade.get_widget("txt_test").set_text(config["test"])
+
+    def save_recent(self):
+        log.debug("RBB:saving recent ")
+        config = {
+            "recent": self.recent
+        }
+        client.remotebrowsebutton.set_config(config)
+
+    def load_recent(self):
+        log.debug("RBB:loading recent ")
+        client.remotebrowsebutton.get_config().addCallback(self.initialize_recent)
+
+    def initialize_recent(self, config):
+        """callback for load_recent"""
+        self.recent = []
+        if "recent" in config:
+            self.recent = config["recent"]
 
     def initializeGUI(self):
         self.glade = gtk.glade.XML(common.get_resource("config.glade"))
@@ -246,13 +280,20 @@ class GtkUI(GtkPluginBase):
         for name in self.buttons.keys() :
           self.buttons[name]['editbox'] =  self.findEditor(self.buttons[name]['window'], self.buttons[name]['editbox'], self.buttons[name]['id'])
           self.buttons[name]['widget'] = self.addButton(self.buttons[name]['editbox'], self.on_browse_button_clicked)
-        
 
     def chooseFolder(self, editbox, parent):
-        dialog = BrowseDialog(editbox.get_text(), parent)
+        log.debug("RBB:Initial content of "+editbox.get_name()+":"+editbox.get_text())
+        dialog = BrowseDialog(editbox.get_text(), self.recent, parent)
         id = dialog.dialog.run()
         if id > 0:
+            log.debug("RBB:folder chosen:"+dialog.selectedfolder)
             editbox.set_text(dialog.selectedfolder)
+            log.debug("RBB:New content of "+editbox.get_name()+":"+editbox.get_text())
+            if self.recent.count(dialog.selectedfolder) > 0:
+                self.recent.remove(dialog.selectedfolder)
+            self.recent.insert(0, dialog.selectedfolder)
+            while len(self.recent) > 10:
+                self.recent.pop()
         dialog.dialog.destroy()
 
     def on_browse_button_clicked(self, widget):
