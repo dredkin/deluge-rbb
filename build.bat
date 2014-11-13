@@ -9,4 +9,4 @@ cd %scriptdrive%%scriptpath%
 python setup.py bdist_egg
 copy dist\* %APPDATA%\deluge\plugins
 
-%delugepath%\Deluge\deluge-debug.exe
+REM %delugepath%\Deluge\deluge-debug.exe

@@ -57,9 +57,10 @@ DEFAULT_PREFS = {
     "test":"NiNiNi"
 }
 
+UTF8 = 'UTF-8'
 CURRENT_LOCALE = locale.getdefaultlocale()[1]
 if CURRENT_LOCALE is None:
-    CURRENT_LOCALE = 'utf8'
+    CURRENT_LOCALE = UTF8
 
 class Core(CorePluginBase):
     def enable(self):
@@ -88,7 +89,7 @@ class Core(CorePluginBase):
         log.debug("RBB:iterating "+absolutepath)
         for f in list:
             if os.path.isdir(os.path.join(absolutepath,f)):
-                f2 = f.decode(CURRENT_LOCALE).encode('utf8')
+                f2 = f.decode(CURRENT_LOCALE).encode(UTF8)
                 subfolders.append(f2)
         return subfolders
             
@@ -96,15 +97,24 @@ class Core(CorePluginBase):
         return os.path.dirname(folder) == folder
     
     @export
+    def save_config(self):
+        """Saves the config"""
+        self.config.save()
+        log.debug("RBB: config saved")
+
+    @export
     def set_config(self, config):
         """Sets the config dictionary"""
+        log.debug("RBB: set_config")
         for key in config.keys():
             self.config[key] = config[key]
-        self.config.save()
+            log.debug("RBB: added history "+str(key)+"->"+str(config[key]))
+        self.save_config()
 
     @export
     def get_config(self):
         """Returns the config dictionary"""
+        log.debug("RBB: config assigned")
         return self.config.config
 
     @export
@@ -139,4 +149,4 @@ class Core(CorePluginBase):
             absolutepath = ""
         else:
             subfolders = self.subfolders_list(absolutepath)
-        return [absolutepath.decode(CURRENT_LOCALE).encode('utf8'), isroot, subfolders, error]
+        return [absolutepath.decode(CURRENT_LOCALE).encode(UTF8), isroot, subfolders, error]

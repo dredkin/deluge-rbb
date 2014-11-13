@@ -175,10 +175,10 @@ class GtkUI(GtkPluginBase):
         config = {
             "test":self.glade.get_widget("txt_test").get_text()
         }
-        client.remotebrowsebutton.set_config(config)
+        client.browsebutton.set_config(config)
 
     def on_show_prefs(self):
-        client.remotebrowsebutton.get_config().addCallback(self.cb_get_config)
+        client.browsebutton.get_config().addCallback(self.cb_get_config)
 
     def cb_get_config(self, config):
         """callback for on show_prefs"""
@@ -189,11 +189,11 @@ class GtkUI(GtkPluginBase):
         config = {
             "recent": self.recent
         }
-        client.remotebrowsebutton.set_config(config)
+        client.browsebutton.set_config(config)
 
     def load_recent(self):
         log.debug("RBB:loading recent ")
-        client.remotebrowsebutton.get_config().addCallback(self.initialize_recent)
+        client.browsebutton.get_config().addCallback(self.initialize_recent)
 
     def initialize_recent(self, config):
         """callback for load_recent"""
@@ -203,6 +203,7 @@ class GtkUI(GtkPluginBase):
 
     def initializeGUI(self):
         self.glade = gtk.glade.XML(common.get_resource("config.glade"))
+        self.load_recent()
         component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
@@ -294,6 +295,7 @@ class GtkUI(GtkPluginBase):
             self.recent.insert(0, dialog.selectedfolder)
             while len(self.recent) > 10:
                 self.recent.pop()
+            self.save_recent()
         dialog.dialog.destroy()
 
     def on_browse_button_clicked(self, widget):
