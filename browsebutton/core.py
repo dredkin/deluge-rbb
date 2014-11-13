@@ -58,6 +58,8 @@ DEFAULT_PREFS = {
 }
 
 CURRENT_LOCALE = locale.getdefaultlocale()[1]
+if CURRENT_LOCALE is None:
+    CURRENT_LOCALE = 'utf8'
 
 class Core(CorePluginBase):
     def enable(self):
