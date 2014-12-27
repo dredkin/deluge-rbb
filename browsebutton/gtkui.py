@@ -171,7 +171,7 @@ class GtkUI(GtkPluginBase):
         self.error = None
 
     def on_apply_prefs(self):
-        log.debug("RBB:applying prefs for remotebrowsebutton")
+        log.debug("RBB:applying prefs for browsebutton")
         config = {
             "test":self.glade.get_widget("txt_test").get_text()
         }
@@ -187,7 +187,7 @@ class GtkUI(GtkPluginBase):
     def save_recent(self):
         log.debug("RBB:saving recent ")
         config = {
-            "recent": self.recent
+            "recent": tuple(self.recent)
         }
         client.browsebutton.set_config(config)
 
@@ -199,7 +199,7 @@ class GtkUI(GtkPluginBase):
         """callback for load_recent"""
         self.recent = []
         if "recent" in config:
-            self.recent = config["recent"]
+            self.recent = list(config["recent"])
 
     def initializeGUI(self):
         self.glade = gtk.glade.XML(common.get_resource("config.glade"))
