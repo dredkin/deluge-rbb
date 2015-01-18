@@ -1,7 +1,7 @@
 #
 # core.py
 #
-# Copyright (C) 2009 dredkin <dmitry.redkin@gmail.com>
+# Copyright (C) 2014 dredkin <dmitry.redkin@gmail.com>
 #
 # Basic plugin template created by:
 # Copyright (C) 2008 Martijn Voncken <mvoncken@gmail.com>
@@ -43,50 +43,110 @@ import deluge.component as component
 import deluge.configmanager
 from deluge.core.rpcserver import export
 import os
+import locale
+import pkg_resources
+import gettext
+
+def windows():
+    return os.name == "nt"
+
+if windows():
+  import win32api
 
 DEFAULT_PREFS = {
     "test":"NiNiNi"
 }
+
+UTF8 = 'UTF-8'
+CURRENT_LOCALE = locale.getdefaultlocale()[1]
+if CURRENT_LOCALE is None:
+    CURRENT_LOCALE = UTF8
 
 class Core(CorePluginBase):
     def enable(self):
         self.config = deluge.configmanager.ConfigManager("browsebutton.conf", DEFAULT_PREFS)
 
     def disable(self):
+        #self.config.save()
         pass
 
     def update(self):
         pass
 
+    def drives_list(self):
+        if windows():
+            drives = win32api.GetLogicalDriveStrings()
+            return drives.split('\000')[:-1]
+        else:
+            return "/"
+            
+    def subfolders_list(self, absolutepath):
+        subfolders = []
+        try:
+            list = os.listdir(absolutepath)
+        except:
+            list = []
+        log.debug("RBB:iterating "+absolutepath)
+        for f in list:
+            if os.path.isdir(os.path.join(absolutepath,f)):
+                f2 = f.decode(CURRENT_LOCALE).encode(UTF8)
+                subfolders.append(f2)
+        return subfolders
+            
+    def is_root_folder(self, folder):
+        return os.path.dirname(folder) == folder
+    
+    @export
+    def save_config(self):
+        """Saves the config"""
+        self.config.save()
+        log.debug("RBB: config saved")
+
     @export
     def set_config(self, config):
         """Sets the config dictionary"""
+        log.debug("RBB: set_config")
         for key in config.keys():
             self.config[key] = config[key]
-        self.config.save()
+            log.debug("RBB: added history "+str(key)+"->"+str(config[key]))
+        self.save_config()
 
     @export
     def get_config(self):
         """Returns the config dictionary"""
+        log.debug("RBB: config assigned")
         return self.config.config
+
+    @export
+    def serverlog(self, line):
+        log.debug(line)
 
     @export
     def get_folder_list(self, folder, subfolder):
         """Returns the list of subfolders for specified folder on server"""
-        from os.path import isfile, join
+        error = ""
         if folder == "":
             folder = os.path.expanduser("~")
-        folder = os.path.join(folder,subfolder)
-        absolutepath = os.path.normpath(folder)
+        else:
+            folder = folder.encode(CURRENT_LOCALE)
+        log.debug("RBB:native folder"+folder)
+        log.debug("RBB:orig subfolder"+subfolder)
+        subfolder = subfolder.encode(CURRENT_LOCALE)
+        newfolder = os.path.join(folder,subfolder)
+        absolutepath = os.path.normpath(newfolder)
+        
         if not os.path.isdir(absolutepath):
+            log.info("RBB:NOT A FOLDER!:"+absolutepath+" (normalized from "+newfolder+")")
+            error = "Cannot List Contents of "+absolutepath
             absolutepath = os.path.expanduser("~")
-        isroot = os.path.dirname(absolutepath) == absolutepath
-        try:
-            list = os.listdir(folder)
-        except:
-            list = []
-        subfolders = []
-        for f in list:
-            if os.path.isdir(os.path.join(folder,f)):
-                subfolders.append(f)
-        return [absolutepath, not isroot, subfolders]
+
+        if windows():
+            isroot = self.is_root_folder(folder) and (subfolder == "..")
+        else:
+            isroot = self.is_root_folder(absolutepath)
+        if windows() and isroot:
+            subfolders = self.drives_list()
+            absolutepath = ""
+        else:
+            subfolders = self.subfolders_list(absolutepath)
+        return [absolutepath.decode(CURRENT_LOCALE).encode(UTF8), isroot, subfolders, error]

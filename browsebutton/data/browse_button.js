@@ -3,7 +3,7 @@ Script: testplugin.js
     The client-side javascript code for the testplugin plugin.
 
 Copyright:
-    (C) dredkin 2009 <dmitry.redkin@gmail.com>
+    (C) dredkin 2014 <dmitry.redkin@gmail.com>
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3, or (at your option)

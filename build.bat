@@ -1,3 +1,4 @@
+taskkill /f /im deluged-debug.exe
 taskkill /f /im deluge-debug.exe
 set scriptdrive=%~d0
 set scriptpath=%~p0
@@ -8,4 +9,4 @@ cd %scriptdrive%%scriptpath%
 python setup.py bdist_egg
 copy dist\* %APPDATA%\deluge\plugins
 
-%delugepath%\Deluge\deluge-debug.exe
+REM %delugepath%\Deluge\deluge-debug.exe

@@ -1,7 +1,7 @@
 #
 # setup.py
 #
-# Copyright (C) 2009 dredkin <dmitry.redkin@gmail.com>
+# Copyright (C) 2014 dredkin <dmitry.redkin@gmail.com>
 #
 # Basic plugin template created by:
 # Copyright (C) 2008 Martijn Voncken <mvoncken@gmail.com>
@@ -42,10 +42,10 @@ from setuptools import setup
 __plugin_name__ = "browsebutton"
 __author__ = "dredkin"
 __author_email__ = "dmitry.redkin@gmail.com"
-__version__ = "0.1.1"
-__url__ = ""
+__version__ = "0.1.7"
+__url__ = "https://github.com/dredkin/deluge-rbb/releases"
 __license__ = "GPLv3"
-__description__ = ""
+__description__ = "Browse Button for Client/Server Mode"
 __long_description__ = """"""
 __pkg_data__ = {__plugin_name__.lower(): ["template/*", "data/*"]}
 
