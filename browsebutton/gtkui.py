@@ -231,7 +231,6 @@ class GtkUI(GtkPluginBase):
         self.menu.connect("activate", self.on_menu_activated, None)
 
 
-        component.get("PluginManager").remove_torrentmenu_item("Move Storage")
         component.get("PluginManager").add_torrentmenu_separator()
         torrentmenu.append(self.menu)
 
