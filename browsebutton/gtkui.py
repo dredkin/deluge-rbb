@@ -47,6 +47,7 @@ import deluge.common
 import deluge.ui.gtkui.menubar
 
 importError = None
+
 try:
     import pkg_resources
     import common
@@ -148,6 +149,8 @@ class GtkUI(GtkPluginBase):
     error = None
     buttons = None
     addDialog = None
+    global menu
+    menu = None
     mainWindow = None
     moveWindow = None
     recent = []
@@ -158,10 +161,15 @@ class GtkUI(GtkPluginBase):
         self.handleError()
 
     def disable(self):
+        global menu
+        global sep
+        log.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
         self.error = None
         component.get("Preferences").remove_page("Browse Button")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
+        component.get("PluginManager").remove_torrentmenu_item(menu)
+        component.get("PluginManager").remove_torrentmenu_item(sep)
         for name in self.buttons.keys() :
           self.deleteButton(self.buttons[name]['widget'])
           self.buttons[name]['widget'] = None
@@ -224,16 +232,18 @@ class GtkUI(GtkPluginBase):
         self.handleError
 
     def addMoveMenu(self):
+        global menu
+        global sep
         torrentmenu = component.get("MenuBar").torrentmenu
-        self.menu = gtk.CheckMenuItem(_("Move Storage Advanced"))
-        self.menu.show()
+        menu = gtk.CheckMenuItem(_("Move Storage Advanced"))
+        menu.show()
         log.debug("------------------------------------------------------------------------------------------------")
-        self.menu.connect("activate", self.on_menu_activated, None)
+        menu.connect("activate", self.on_menu_activated, None)
 
 
-        component.get("PluginManager").remove_torrentmenu_item("Move Storage")
-        component.get("PluginManager").add_torrentmenu_separator()
-        torrentmenu.append(self.menu)
+
+        sep = component.get("PluginManager").add_torrentmenu_separator()
+        torrentmenu.append(menu)
 
 
     def on_menu_activated(self, widget=None, data=None):
