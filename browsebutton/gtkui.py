@@ -225,12 +225,16 @@ class GtkUI(GtkPluginBase):
 
     def addMoveMenu(self):
         torrentmenu = component.get("MenuBar").torrentmenu
-        self.menu = gtk.CheckMenuItem(_("test"))
+        self.menu = gtk.CheckMenuItem(_("Move Storage Advanced"))
         self.menu.show()
         log.debug("------------------------------------------------------------------------------------------------")
         self.menu.connect("activate", self.on_menu_activated, None)
 
+
+        component.get("PluginManager").remove_torrentmenu_item("Move Storage")
+        component.get("PluginManager").add_torrentmenu_separator()
         torrentmenu.append(self.menu)
+
 
     def on_menu_activated(self, widget=None, data=None):
         log.debug("Item clicked")
@@ -253,6 +257,7 @@ class GtkUI(GtkPluginBase):
         self.move_storage_dialog.set_transient_for(component.get("MainWindow").window)
         self.move_storage_dialog_entry = glade.get_widget("entry_destination")
         self.move_storage_browse_button = glade.get_widget("browse")
+        self.move_storage_entry_destination = glade.get_widget("entry_destination")
         log.debug("------------------------------------------------------------------------------------------------")
         log.debug(status)
 
@@ -273,15 +278,16 @@ class GtkUI(GtkPluginBase):
                 ).addCallback(on_core_result)
             self.move_storage_dialog.hide()
 
+
+        def browseClicked(something):
+            log.debug(something)
+            self.chooseFolder(self.move_storage_entry_destination, None)
+
+
         self.move_storage_dialog.connect("response", on_dialog_response_event)
-        self.move_storage_browse_button.connect("clicked", self.on_browse_button_clicked)
+        self.move_storage_browse_button.connect("clicked", browseClicked)
 
         self.move_storage_dialog.show()
-
-
-
-
-
 
 
 
