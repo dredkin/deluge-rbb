@@ -224,12 +224,14 @@ class GtkUI(GtkPluginBase):
         menu.set_label("Move Storage")
         menu.show()
         menu.connect("activate", self.on_menu_activated, None)
+        count = 0
         #Remove the original move button
         for item in torrentmenu.get_children():
             if item.get_name() == "menuitem_move":
                 torrentmenu.remove(item)
+                count = count + 1
         #Insert into original "move" position
-        torrentmenu.insert(menu,15)
+        torrentmenu.insert(menu,count)
 
     def on_menu_activated(self, widget=None, data=None):
         log.debug("Item clicked")
