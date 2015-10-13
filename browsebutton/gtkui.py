@@ -44,10 +44,8 @@ from deluge.ui.client import client
 from deluge.plugins.pluginbase import GtkPluginBase
 import deluge.component as component
 import deluge.common
-import deluge.ui.gtkui.menubar
 
 importError = None
-
 try:
     import pkg_resources
     import common
@@ -66,6 +64,7 @@ def findwidget(container, name):
               return ret
     return None
 
+
 def showMessage(parent, message):
     if parent is None:
         parent = component.get("MainWindow").window
@@ -74,8 +73,10 @@ def showMessage(parent, message):
     md.run()
     md.destroy()
 
+
 def caseInsensitive(key):
     return key.lower()
+
 
 class BrowseDialog:
     def __init__(self, path, recent, parent):
@@ -149,10 +150,7 @@ class GtkUI(GtkPluginBase):
     error = None
     buttons = None
     addDialog = None
-    global menu
-    menu = None
     mainWindow = None
-    moveWindow = None
     recent = []
     def enable(self):
         self.error = importError
@@ -161,15 +159,10 @@ class GtkUI(GtkPluginBase):
         self.handleError()
 
     def disable(self):
-        global menu
-        global sep
-        log.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
         self.error = None
-        component.get("Preferences").remove_page("Browse Button")
-        component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
-        component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
-        component.get("PluginManager").remove_torrentmenu_item(menu)
-        component.get("PluginManager").remove_torrentmenu_item(sep)
+        #component.get("Preferences").remove_page("Browse Button")
+        #component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
+        #component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
         for name in self.buttons.keys() :
           self.deleteButton(self.buttons[name]['widget'])
           self.buttons[name]['widget'] = None
@@ -180,8 +173,6 @@ class GtkUI(GtkPluginBase):
             showMessage(None, self.error)
         self.error = None
 
-
-
     def on_apply_prefs(self):
         log.debug("RBB:applying prefs for browsebutton")
         config = {
@@ -191,7 +182,6 @@ class GtkUI(GtkPluginBase):
 
     def on_show_prefs(self):
         client.browsebutton.get_config().addCallback(self.cb_get_config)
-        log.debug("Im here, showing prefs")
 
     def cb_get_config(self, config):
         """callback for on show_prefs"""
@@ -214,63 +204,47 @@ class GtkUI(GtkPluginBase):
         if "recent" in config:
             self.recent = list(config["recent"])
 
-    def on_menuitem_move_activate():
-        log.debug("asdasdsadsasds")
-
     def initializeGUI(self):
         self.glade = gtk.glade.XML(common.get_resource("config.glade"))
         self.load_recent()
-        component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
-        component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
-        component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
-
+        #component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
+        #component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
+        #component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
         self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': None}, \
                      'completed' : { 'id' : 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': None}, \
                  'completed_tab' : { 'id' : 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
         self.makeButtons()
         self.addMoveMenu()
-        self.handleError
+        self.handleError()
 
     def addMoveMenu(self):
         global menu
-        global sep
         torrentmenu = component.get("MenuBar").torrentmenu
-        menu = gtk.CheckMenuItem(_("Move Storage Advanced"))
+        menu = gtk.ImageMenuItem(gtk.STOCK_SAVE_AS, 'Move Storage Advanced')
+        menu.set_label("Move Storage")
         menu.show()
-        log.debug("------------------------------------------------------------------------------------------------")
         menu.connect("activate", self.on_menu_activated, None)
-
-
-
-        sep = component.get("PluginManager").add_torrentmenu_separator()
-        torrentmenu.append(menu)
-
+        count = 0
+        #Remove the original move button
+        for item in torrentmenu.get_children():
+            count = count + 1
+            if item.get_name() == "menuitem_move":
+                torrentmenu.remove(item)
+                break
+        #Insert into original "move" position
+        torrentmenu.insert(menu,count)
 
     def on_menu_activated(self, widget=None, data=None):
         log.debug("Item clicked")
-
-        #self.show_move_storage_dialog(component.get("TorrentView").get_torrent_state(component.get("TorrentView").get_selected_torrent()))
         client.core.get_torrent_status(component.get("TorrentView").get_selected_torrent(), ["save_path"]).addCallback(self.show_move_storage_dialog)
 
     def show_move_storage_dialog(self, status):
-        log.debug("show_move_storage_dialog")
-        glade = gtk.glade.XML(pkg_resources.resource_filename(
-            "deluge.ui.gtkui", "glade/move_storage_dialog.glade"
-        ))
-
         glade = gtk.glade.XML(common.get_resource("myMove_storage_dialog.glade"))
-
-
-        # Keep it referenced:
-        #  https://bugzilla.gnome.org/show_bug.cgi?id=546802
         self.move_storage_dialog = glade.get_widget("move_storage_dialog")
         self.move_storage_dialog.set_transient_for(component.get("MainWindow").window)
         self.move_storage_dialog_entry = glade.get_widget("entry_destination")
         self.move_storage_browse_button = glade.get_widget("browse")
         self.move_storage_entry_destination = glade.get_widget("entry_destination")
-        log.debug("------------------------------------------------------------------------------------------------")
-        log.debug(status)
-
         self.move_storage_dialog_entry.set_text(status["save_path"])
         def on_dialog_response_event(widget, response_id):
 
@@ -288,21 +262,11 @@ class GtkUI(GtkPluginBase):
                 ).addCallback(on_core_result)
             self.move_storage_dialog.hide()
 
-
         def browseClicked(something):
-            log.debug(something)
             self.chooseFolder(self.move_storage_entry_destination, None)
-
-
         self.move_storage_dialog.connect("response", on_dialog_response_event)
         self.move_storage_browse_button.connect("clicked", browseClicked)
-
         self.move_storage_dialog.show()
-
-
-
-
-
 
 
     def addButton(self, editbox, onClickEvent):
@@ -392,7 +356,6 @@ class GtkUI(GtkPluginBase):
         dialog.dialog.destroy()
 
     def on_browse_button_clicked(self, widget):
-        log.debug("Button clicked")
         for name in self.buttons.keys() :
             if widget == self.buttons[name]['widget']:
                 return self.chooseFolder(self.buttons[name]['editbox'], self.buttons[name]['window'])

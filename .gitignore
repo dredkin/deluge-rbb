@@ -34,5 +34,8 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
-MYFTP.bat
-plink.exe
+release
+/deluge-rbb.iml
+/.idea
+/release
+.gitignore

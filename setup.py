@@ -42,7 +42,7 @@ from setuptools import setup
 __plugin_name__ = "browsebutton"
 __author__ = "dredkin"
 __author_email__ = "dmitry.redkin@gmail.com"
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 __url__ = "https://github.com/dredkin/deluge-rbb/releases"
 __license__ = "GPLv3"
 __description__ = "Browse Button for Client/Server Mode"
