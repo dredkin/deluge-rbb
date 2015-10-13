@@ -215,7 +215,7 @@ class GtkUI(GtkPluginBase):
                  'completed_tab' : { 'id' : 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
         self.makeButtons()
         self.addMoveMenu()
-        self.handleError
+        self.handleError()
 
     def addMoveMenu(self):
         global menu
@@ -227,9 +227,10 @@ class GtkUI(GtkPluginBase):
         count = 0
         #Remove the original move button
         for item in torrentmenu.get_children():
+            count = count + 1
             if item.get_name() == "menuitem_move":
                 torrentmenu.remove(item)
-                count = count + 1
+                break
         #Insert into original "move" position
         torrentmenu.insert(menu,count)
 
