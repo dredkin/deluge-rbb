@@ -54,7 +54,9 @@ if windows():
   import win32api
 
 DEFAULT_PREFS = {
-    "test":"NiNiNi"
+    #Default to empty to have no specified root dir.
+    "RootDirPath":"",
+    "DisableTraversal":"false"
 }
 
 UTF8 = 'UTF-8'
@@ -86,7 +88,6 @@ class Core(CorePluginBase):
             list = os.listdir(absolutepath)
         except:
             list = []
-        log.debug("RBB:iterating "+absolutepath)
         for f in list:
             if os.path.isdir(os.path.join(absolutepath,f)):
                 f2 = f.decode(CURRENT_LOCALE).encode(UTF8)

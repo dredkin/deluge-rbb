@@ -1,25 +1,109 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.5 on Fri Aug  8 23:34:44 2008 -->
+<?xml version="1.0" encoding="UTF-8"?>
 <glade-interface>
-  <widget class="GtkWindow" id="window1">
+  <!-- interface-requires gtk+ 2.6 -->
+  <!-- interface-naming-policy toplevel-contextual -->
+  <widget class="GtkWindow" id="Config Window">
+    <property name="can_focus">False</property>
     <child>
-      <widget class="GtkHBox" id="prefs_box">
+      <widget class="GtkVBox" id="prefs_box">
         <property name="visible">True</property>
+        <property name="can_focus">False</property>
         <child>
-          <widget class="GtkLabel" id="label1">
+          <widget class="GtkHBox" id="hbox2">
             <property name="visible">True</property>
-            <property name="label" translatable="yes">Test config value:</property>
-          </widget>
-        </child>
-        <child>
-          <widget class="GtkEntry" id="txt_test">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">10</property>
+            <child>
+              <widget class="GtkLabel" id="RootDir_Label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip" translatable="yes">The directory set here will be whats shown by default when the "browse" window opens. Leaving this empty will open the browse window where the file/torrent is currently located.</property>
+                <property name="xalign">0.10999999940395355</property>
+                <property name="label" translatable="yes">Root directory
+(Blank for default)</property>
+                <property name="justify">center</property>
+                <property name="track_visited_links">False</property>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">7</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkEntry" id="RootDir_Path">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">●</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="secondary_icon_activatable">False</property>
+                <property name="primary_icon_sensitive">True</property>
+                <property name="secondary_icon_sensitive">True</property>
+              </widget>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkAspectFrame" id="aspectframe1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
+                <child>
+                  <widget class="GtkButton" id="RootDir_Browse">
+                    <property name="label" translatable="yes">Browse</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                  </widget>
+                </child>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkCheckButton" id="RootDir_DisableTraversal">
+                <property name="label" translatable="yes">Disable traversal
+above this directory.</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="tooltip" translatable="yes">Stops the browse window from moving past this directory. Useful for restricting the 'move' dialog to a folder/drive.</property>
+                <property name="image_position">top</property>
+                <property name="draw_indicator">True</property>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">7</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
           </widget>
           <packing>
-            <property name="position">1</property>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
           </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </widget>
     </child>

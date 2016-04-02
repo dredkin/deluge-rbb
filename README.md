@@ -27,6 +27,8 @@ Browse buttons added to:
 * Add torrents dialog (for Download location & move completed location)
 * Move completed in the options tab of the bottom menu bar.
 * Right click menu "Move" dialog.
+* Set a default folder for the browse dialog
+** Also limit directory traversal to this folder & subfolders.
 
 ## Building
 To build yourself you will need to run `python setup.py bdist_egg` to build the egg file.
@@ -35,7 +37,25 @@ To build yourself you will need to run `python setup.py bdist_egg` to build the 
 The included `build.sh` file will build the egg file and copy it to the local plugins folder for testing.
 
 ### Windows
-The included `build.bat` file will try to do some fancy stuff with disabling the plugin on the server before copying the egg to the remote server and re-enabling the plugin. The remote functions use programs associated with putty (plink & pscp) to run remote commands and FTP files. You will need to have putty installed & your host configured for [automatic connections](http://the.earth.li/~sgtatham/putty/0.52/htmldoc/Chapter7.html#7.2.2) for this to work. Once this is done change the value of `serverAddr` at the top of the batch file to the name you saved the configuration in putty.
+The included `build.bat` file will try to do some fancy stuff with disabling the plugin on the server before copying the egg to the remote server and re-enabling the plugin. The remote functions use programs associated with putty (plink & pscp) to run remote commands and FTP files. You will need to have putty installed & your host configured for [automatic connections](http://the.earth.li/~sgtatham/putty/0.52/htmldoc/Chapter7.html#7.2.2) for this to work (note putty dir needs to also be on your environment PATH). Once this is done change the value of `serverAddr` at the top of the batch file to the name you saved the configuration in putty.
+
+When using this script for the first time you should build the plugin python egg and **manually** upload it to the server via the *Preferences -> Plugins -> Install Plugin*. Then enable the plugin through the *Preferences -> Plugins* tab. This should stop some low frequency issues with deluge becomming confused with the plugin version when using this `build.bat` script.
+
+These issues look like this:
+```
+Traceback (most recent call last):
+  File "/usr/local/lib/python2.7/dist-packages/deluge-1.3.11-py2.7.egg/deluge/core/rpcserver.py", line 299, in dispatch
+    ret = self.factory.methods[method](*args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/deluge-1.3.11-py2.7.egg/deluge/core/core.py", line 527, in enable_plugin
+    self.pluginmanager.enable_plugin(plugin)
+  File "/usr/local/lib/python2.7/dist-packages/deluge-1.3.11-py2.7.egg/deluge/core/pluginmanager.py", line 82, in enable_plugin
+    super(PluginManager, self).enable_plugin(name)
+  File "/usr/local/lib/python2.7/dist-packages/deluge-1.3.11-py2.7.egg/deluge/pluginmanagerbase.py", line 151, in enable_plugin
+    component.start([instance.plugin._component_name])
+  File "/usr/local/lib/python2.7/dist-packages/deluge-1.3.11-py2.7.egg/deluge/component.py", line 290, in start
+    if self.components[name]._component_depend:
+KeyError: 'CorePlugin.browsebutton'
+```
 
 When calling the batch script you can pass in any number of Python versions to build the eggs for.
 e.g. `build.bat "C:\Python26\python.exe" "C:\Python27\python.exe" "C:\Python34\python.exe"`
