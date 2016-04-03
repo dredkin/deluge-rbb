@@ -1,7 +1,10 @@
 # Remote "browse" button for Deluge
 This is a plugin for [Deluge](http://deluge-torrent.org) torrent client.
 By default, when started in **client-server mode**, Deluge has no option to choose destination folder for download, you have to enter it by hand.
-The **Remote "browse" button** plugin eliminates this drawback by adding `Browse..` button to *"Add torrent"* dialog.
+The **Remote "browse" button** plugin eliminates this drawback by adding `Browse..` button to *"Add torrent"* dialog. You can also set a *top level* directory which will be the default starting location for browse dialog, there is also the option to stop the user traversing above this directory (useful for restricting moves to a specific drive/folder).
+
+![Image showing browse buttons.](https://raw.githubusercontent.com/dredkin/deluge-rbb/master/Images/BrowseButton.png)
+![Image showing preferences pane](https://raw.githubusercontent.com/dredkin/deluge-rbb/master/Images/Preferences.png)
 
 ## Download
 [Download](https://github.com/dredkin/deluge-rbb/releases) .egg files for python 2.6, 2.7 & 3.4.

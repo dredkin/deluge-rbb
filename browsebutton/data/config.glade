@@ -6,13 +6,10 @@
     <property name="can_focus">False</property>
     <child>
       <widget class="GtkVBox" id="prefs_box">
-        <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
           <widget class="GtkHBox" id="hbox2">
-            <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="spacing">10</property>
             <child>
               <widget class="GtkLabel" id="RootDir_Label">
                 <property name="visible">True</property>
@@ -83,6 +80,7 @@ above this directory.</property>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
                 <property name="padding">7</property>
+                <property name="pack_type">end</property>
                 <property name="position">3</property>
               </packing>
             </child>
@@ -92,18 +90,6 @@ above this directory.</property>
             <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
         </child>
       </widget>
     </child>
