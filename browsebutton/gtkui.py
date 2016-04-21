@@ -79,7 +79,7 @@ def caseInsensitive(key):
 
 
 class BrowseDialog:
-    def __init__(self, path, recent, parent):
+    def __init__(self, path, recent, parent, RootDirectory, RootDirectoryDisableTraverse):
         self.selectedfolder = path
         self.builder = gtk.Builder()
         self.builder.add_from_file(common.get_resource('folder_browse_dialog.glade'))
@@ -103,15 +103,22 @@ class BrowseDialog:
         self.iconview.connect("item-activated", self.subfolder_activated)
         self.refillList("")
         self.recent = recent
+        self.RootDirectory = RootDirectory
+        self.RootDirectoryDisableTraverse = RootDirectoryDisableTraverse
 
     def refillList(self, subfolder):
-        log.debug("RBB:refillList selectedfolder="+self.selectedfolder+";subfolder="+ subfolder)
         client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
         if results[3]:
             showMessage(None, results[3])
             return
+
+        if self.RootDirectoryDisableTraverse:
+            if self.RootDirectory and not results[0].startswith(self.RootDirectory):
+                log.debug("Browse Folder: disable=" + str(self.RootDirectoryDisableTraverse) + " matched start with rootDir '" + results[0] + "'")
+                return
+        
         self.liststore.clear()
         self.selectedfolder = results[0]
         log.debug("RBB:callback selectedfolder="+self.selectedfolder)
@@ -152,6 +159,10 @@ class GtkUI(GtkPluginBase):
     addDialog = None
     mainWindow = None
     recent = []
+    
+    def str2bool(self,v):
+        return v.lower() in ("yes", "true", "t", "1")
+  
     def enable(self):
         self.error = importError
         if self.error is None:
@@ -160,9 +171,9 @@ class GtkUI(GtkPluginBase):
 
     def disable(self):
         self.error = None
-        #component.get("Preferences").remove_page("Browse Button")
-        #component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
-        #component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
+        component.get("Preferences").remove_page("Browse Button")
+        component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
+        component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
         for name in self.buttons.keys() :
           self.deleteButton(self.buttons[name]['widget'])
           self.buttons[name]['widget'] = None
@@ -174,28 +185,31 @@ class GtkUI(GtkPluginBase):
         self.error = None
 
     def on_apply_prefs(self):
-        log.debug("RBB:applying prefs for browsebutton")
         config = {
-            "test":self.glade.get_widget("txt_test").get_text()
+            "RootDirPath":self.glade.get_widget("RootDir_Path").get_text().rstrip('\\').rstrip('/'),
+            "DisableTraversal":str(self.glade.get_widget("RootDir_DisableTraversal").get_active())
         }
         client.browsebutton.set_config(config)
+        self.load_RootDirectory()
 
     def on_show_prefs(self):
         client.browsebutton.get_config().addCallback(self.cb_get_config)
 
     def cb_get_config(self, config):
         """callback for on show_prefs"""
-        self.glade.get_widget("txt_test").set_text(config["test"])
-
+        self.glade.get_widget("RootDir_Path").set_text(config["RootDirPath"])
+        self.glade.get_widget("RootDir_DisableTraversal").set_active(self.str2bool(config["DisableTraversal"]))
+        def browseClicked(something):
+            self.chooseFolder(self.glade.get_widget("RootDir_Path"), None)
+        self.glade.get_widget("RootDir_Browse").connect("clicked", browseClicked)
+        
     def save_recent(self):
-        log.debug("RBB:saving recent ")
         config = {
             "recent": tuple(self.recent)
         }
         client.browsebutton.set_config(config)
 
     def load_recent(self):
-        log.debug("RBB:loading recent ")
         client.browsebutton.get_config().addCallback(self.initialize_recent)
 
     def initialize_recent(self, config):
@@ -203,13 +217,26 @@ class GtkUI(GtkPluginBase):
         self.recent = []
         if "recent" in config:
             self.recent = list(config["recent"])
+                        
+    def load_RootDirectory(self):
+        client.browsebutton.get_config().addCallback(self.initialize_RootDirectory)
+
+    def initialize_RootDirectory(self, config):
+        """callback for load_RootDirectory"""
+        self.RootDirectory = ""
+        if "RootDirPath" in config:
+            self.RootDirectory = config["RootDirPath"]
+        self.RootDirectoryDisableTraverse = False
+        if "DisableTraversal" in config:
+            self.RootDirectoryDisableTraverse = self.str2bool(config["DisableTraversal"])
 
     def initializeGUI(self):
         self.glade = gtk.glade.XML(common.get_resource("config.glade"))
         self.load_recent()
-        #component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
-        #component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
-        #component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
+        self.load_RootDirectory()
+        component.get("Preferences").add_page("Browse Button", self.glade.get_widget("prefs_box"))
+        component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
+        component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
         self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': None}, \
                      'completed' : { 'id' : 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': None}, \
                  'completed_tab' : { 'id' : 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
@@ -235,7 +262,6 @@ class GtkUI(GtkPluginBase):
         torrentmenu.insert(menu,count)
 
     def on_menu_activated(self, widget=None, data=None):
-        log.debug("Item clicked")
         client.core.get_torrent_status(component.get("TorrentView").get_selected_torrent(), ["save_path"]).addCallback(self.show_move_storage_dialog)
 
     def show_move_storage_dialog(self, status):
@@ -340,8 +366,11 @@ class GtkUI(GtkPluginBase):
           self.buttons[name]['widget'] = self.addButton(self.buttons[name]['editbox'], self.on_browse_button_clicked)
 
     def chooseFolder(self, editbox, parent):
-        log.debug("RBB:Initial content of "+editbox.get_name()+":"+editbox.get_text())
-        dialog = BrowseDialog(editbox.get_text(), self.recent, parent)
+        if self.RootDirectory:
+            startDir = self.RootDirectory
+        else:
+            startDir = editbox.get_text()
+        dialog = BrowseDialog(startDir, self.recent, parent, self.RootDirectory, self.RootDirectoryDisableTraverse)
         id = dialog.dialog.run()
         if id > 0:
             log.debug("RBB:folder chosen:"+dialog.selectedfolder)
