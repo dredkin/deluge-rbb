@@ -123,16 +123,40 @@ class Core(CorePluginBase):
         log.debug(line)
 
     @export
+    def make_current_locale(self, string, name):
+        if isinstance(string, str):
+            log.debug("RBB:" + name + " is str = " + string)
+            try:
+                uni = string.decode(UTF8)
+                log.debug("RBB:" + name + " decoded from utf8 = "+ string)
+            except:
+                log.debug("RBB:" + name + " IS NOT UTF8!!!")
+                try:
+                    uni = string.decode(CURRENT_LOCALE)
+                    log.debug("RBB:" + name + " decoded from CURRENT_LOCALE = "+ string)
+                except:
+                    log.info("RBB:" + name + " IS UNDECODABLE!!! dont know what to do...")
+                    return string
+        elif isinstance(string, unicode):
+            log.debug("RBB:" + name + " is Unicode")
+            uni = string
+        string = uni.encode(CURRENT_LOCALE)
+        log.debug("RBB:" + name + " encoded to CURRENT_LOCALE = "+ string)
+        return string
+
+    @export
     def get_folder_list(self, folder, subfolder):
         """Returns the list of subfolders for specified folder on server"""
+        log.debug("RBB:CURRENT_LOCALE is "+CURRENT_LOCALE)
         error = ""
+        log.debug("RBB:original folder="+folder)
+        log.debug("RBB:original subfolder="+subfolder)
+        folder = self.make_current_locale(folder, "folder")
         if folder == "":
             folder = os.path.expanduser("~")
-        else:
-            folder = folder.encode(CURRENT_LOCALE)
-        log.debug("RBB:native folder"+folder)
-        log.debug("RBB:orig subfolder"+subfolder)
-        subfolder = subfolder.encode(CURRENT_LOCALE)
+
+        subfolder = self.make_current_locale(subfolder, "subfolder")
+
         newfolder = os.path.join(folder,subfolder)
         absolutepath = os.path.normpath(newfolder)
         

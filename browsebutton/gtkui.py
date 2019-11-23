@@ -174,10 +174,11 @@ class GtkUI(GtkPluginBase):
         component.get("Preferences").remove_page("Browse Button")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
-        for name in self.buttons.keys() :
-          self.deleteButton(self.buttons[name]['widget'])
-          self.buttons[name]['widget'] = None
-          self.handleError()
+        if self.buttons is not None:
+            for name in self.buttons.keys() :
+                self.deleteButton(self.buttons[name]['widget'])
+                self.buttons[name]['widget'] = None
+                self.handleError()
 
     def handleError(self):
         if self.error is not None:
@@ -251,15 +252,18 @@ class GtkUI(GtkPluginBase):
         menu.set_label("Move Storage")
         menu.show()
         menu.connect("activate", self.on_menu_activated, None)
-        count = 0
+        position = 0
         #Remove the original move button
         for item in torrentmenu.get_children():
-            count = count + 1
+            position = position + 1
             if item.get_name() == "menuitem_move":
                 torrentmenu.remove(item)
                 break
         #Insert into original "move" position
-        torrentmenu.insert(menu,count)
+        if position < len(torrentmenu.get_children()):
+            torrentmenu.insert(menu,count)
+        else:
+            torrentmenu.append(menu)
 
     def on_menu_activated(self, widget=None, data=None):
         client.core.get_torrent_status(component.get("TorrentView").get_selected_torrent(), ["save_path"]).addCallback(self.show_move_storage_dialog)
