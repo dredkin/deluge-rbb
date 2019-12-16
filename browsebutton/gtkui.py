@@ -77,7 +77,6 @@ def showMessage(parent, message):
 def caseInsensitive(key):
     return key.lower()
 
-
 class BrowseDialog:
     def __init__(self, path, recent, parent, RootDirectory, RootDirectoryDisableTraverse):
         self.selectedfolder = path
@@ -110,6 +109,10 @@ class BrowseDialog:
         client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
+        if len(results) < 3:
+            showMessage(None, "Cannot get folders list from server.\nCheck if plugin is nstalled on server side")
+            return
+
         if results[3]:
             showMessage(None, results[3])
             return
@@ -256,7 +259,7 @@ class GtkUI(GtkPluginBase):
         #Remove the original move button
         for item in torrentmenu.get_children():
             position = position + 1
-            if item.get_name() == "menuitem_move":
+            if (item.get_name() == "menuitem_move") or (item.get_label() == "Move Storage"):
                 torrentmenu.remove(item)
                 break
         #Insert into original "move" position
