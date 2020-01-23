@@ -36,23 +36,31 @@
 #    this exception statement from your version. If you delete this exception
 #    statement from all source files in the program, then also delete it here.
 #
+import sys
+PY3 =  sys.version_info[0] >= 3
 
 from deluge.plugins.init import PluginInitBase
 
 class CorePlugin(PluginInitBase):
     def __init__(self, plugin_name):
-        from core import Core as _plugin_cls
+        from .core import Core as _plugin_cls
         self._plugin_cls = _plugin_cls
         super(CorePlugin, self).__init__(plugin_name)
 
 class GtkUIPlugin(PluginInitBase):
     def __init__(self, plugin_name):
-        from gtkui import GtkUI as _plugin_cls
+        from .gtkui import GtkUI as _plugin_cls
         self._plugin_cls = _plugin_cls
         super(GtkUIPlugin, self).__init__(plugin_name)
 
 class WebUIPlugin(PluginInitBase):
     def __init__(self, plugin_name):
-        from webui import WebUI as _plugin_cls
+        from .webui import WebUI as _plugin_cls
         self._plugin_cls = _plugin_cls
         super(WebUIPlugin, self).__init__(plugin_name)
+
+class Gtk3UIPlugin(PluginInitBase):
+    def __init__(self, plugin_name):
+        from .gtk3ui import Gtk3UI as _plugin_cls
+        self._plugin_cls = _plugin_cls
+        super(Gtk3UIPlugin, self).__init__(plugin_name)

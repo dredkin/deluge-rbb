@@ -37,7 +37,16 @@
 #    statement from all source files in the program, then also delete it here.
 #
 
-from deluge.log import LOG as log
+import sys
+PY3 =  sys.version_info[0] >= 3
+
+if PY3:
+    import logging
+    log = logging.getLogger(__name__)
+else:
+    from deluge.log import LOG as log
+
+
 from deluge.plugins.pluginbase import CorePluginBase
 import deluge.component as component
 import deluge.configmanager
@@ -66,7 +75,11 @@ if CURRENT_LOCALE is None:
 
 class Core(CorePluginBase):
     def enable(self):
+        log.info("RBB: enabling plugin")
         self.config = deluge.configmanager.ConfigManager("browsebutton.conf", DEFAULT_PREFS)
+        if self.config is not None:
+            log.info("RBB: config read")
+        log.info("RBB: plugin enabled")
 
     def disable(self):
         #self.config.save()
@@ -90,7 +103,10 @@ class Core(CorePluginBase):
             list = []
         for f in list:
             if os.path.isdir(os.path.join(absolutepath,f)):
-                f2 = f.decode(CURRENT_LOCALE).encode(UTF8)
+                if PY3:
+                    f2 = f
+                else:
+                    f2 = f.decode(CURRENT_LOCALE).encode(UTF8)
                 subfolders.append(f2)
         return subfolders
             
@@ -124,6 +140,8 @@ class Core(CorePluginBase):
 
     @export
     def make_current_locale(self, string, name):
+        if PY3:
+            return string
         if isinstance(string, str):
             log.debug("RBB:" + name + " is str = " + string)
             try:
@@ -174,4 +192,7 @@ class Core(CorePluginBase):
             absolutepath = ""
         else:
             subfolders = self.subfolders_list(absolutepath)
-        return [absolutepath.decode(CURRENT_LOCALE).encode(UTF8), isroot, subfolders, error]
+        if PY3:
+            return [absolutepath, isroot, subfolders, error]
+        else:
+            return [absolutepath.decode(CURRENT_LOCALE).encode(UTF8), isroot, subfolders, error]
