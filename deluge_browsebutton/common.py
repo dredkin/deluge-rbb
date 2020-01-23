@@ -20,4 +20,4 @@ def get_resource(filename):
         ext = '.ui'
     else:
         ext = '.glade'
-    return resource_filename(__package__, os.path.join('data', filename, ext))
+    return resource_filename(__package__, os.path.join('data', filename + ext))

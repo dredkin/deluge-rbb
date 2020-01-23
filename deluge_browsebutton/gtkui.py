@@ -73,13 +73,13 @@ def typename(x):
     return type(x).__name__
 
 def widget_id(widget):
-    if widget is gtk.Widget:
+    if issubclass(type(widget), gtk.Widget):
         if PY3:
             return gtk.Buildable.get_name(widget)
         else:
             return widget.get_name()
     else:
-        return "NOt_A_WIDGET"
+        return typename(widget) +" is not a GtkWidget"
 
 def widget_descr(widget):
     return "[Type:"+xstr(widget.get_name() if hasattr(widget, "get_name") else typename(widget))+\
@@ -206,12 +206,29 @@ class BrowseDialog:
             self.selectedfolder = str(model[index][0])
             self.refillList("")
 
-if PY3:
-    BasepluginClass = Gtk3PluginBase
-else:
-    BasePluginClass = GtkPluginBase
-    
-class BrowseButtonUI(BasePluginClass):
+class AbstractUI:
+    def getTheme(self):
+        return
+
+    def getWidget(self, id):
+        return
+
+    def makeBuilder(self):
+        return 
+
+    def OK(self):
+        return 
+
+    def findEditor(self, button):
+        return True
+
+    def findButton(self, button):
+        return True
+
+    def deleteButton(self, button):
+        return 
+
+class BrowseButtonUI(AbstractUI):
     error = None
     buttons = None
     addDialog = None
@@ -297,7 +314,7 @@ class BrowseButtonUI(BasePluginClass):
             self.RootDirectoryDisableTraverse = self.str2bool(config["DisableTraversal"])
 
     def initializeGUI(self):
-        self.makeBuiler()
+        self.makeBuilder()
         self.load_recent()
         self.load_RootDirectory()
         component.get("Preferences").add_page("Browse Button", self.getWidget("prefs_box"))
@@ -397,14 +414,13 @@ class BrowseButtonUI(BasePluginClass):
                          'completed' : { 'id': 'hbox_move_completed_chooser' ,    'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
                      'completed_tab' : { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None} }
         else:
-            self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': None}, \
-                         'completed' : { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': None}, \
-                     'completed_tab' : { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': None} }
+            self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
+                         'completed' : { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
+                     'completed_tab' : { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow} }
 
 
         for name in self.buttons.keys() :
             button = self.buttons[name]
-
             editbox = self.findEditor(button)
             if editbox is None:
                 self.handleError()
@@ -452,7 +468,7 @@ class BrowseButtonUI(BasePluginClass):
                 return self.chooseFolder(self.buttons[name]['editbox'], self.buttons[name]['window'])
 
 if PY3:
-    class Gtk3UI(BrowseButtonUI):
+    class Gtk3UI_(BrowseButtonUI):
         def getTheme(self):
             return gtk.IconTheme().get_default()
 
@@ -472,8 +488,8 @@ if PY3:
                 return None
             editbox = self.findwidget(hbox, 'entry_text', False)
             if editbox is None:
-                return False
-            return True
+                return None
+            return editbox
 
         def findButton(self, button):
             hbox = self.findwidget(button['window'], button['id'], False)
@@ -498,7 +514,7 @@ if PY3:
                 button['widget'] = None
             return True
 else:
-    class GtkUI(BrowseButtonUI):
+    class GtkUI_(BrowseButtonUI):
         def getTheme(self):
             return gtk.icon_theme_get_default()
 
@@ -549,4 +565,22 @@ else:
                 button['widget'].parent.remove(button)
                 button['widget'] = None
             return True
+
+if PY3:
+    class Gtk3UI(Gtk3PluginBase):
+        UI = Gtk3UI_()
+
+        def enable(self):
+            return self.UI.enable()
+        def disable(self):
+            return self.UI.disable()
+
+else:
+    class Gtk3UI(GtkPluginBase):
+        UI = GtkUI_()
+
+        def enable(self):
+            return self.UI.enable()
+        def disable(self):
+            return self.UI.disable()
 
