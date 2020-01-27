@@ -576,7 +576,7 @@ if PY3:
             return self.UI.disable()
 
 else:
-    class Gtk3UI(GtkPluginBase):
+    class GtkUI(GtkPluginBase):
         UI = GtkUI_()
 
         def enable(self):
