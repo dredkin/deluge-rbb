@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<glade-interface>
+<interface>
   <!-- interface-requires gtk+ 2.6 -->
   <!-- interface-naming-policy toplevel-contextual -->
-  <widget class="GtkWindow" id="Config Window">
+  <object class="GtkWindow" id="Config Window">
     <property name="can_focus">False</property>
     <child>
-      <widget class="GtkVBox" id="prefs_box">
+      <object class="GtkVBox" id="prefs_box">
         <property name="can_focus">False</property>
         <child>
-          <widget class="GtkHBox" id="hbox2">
+          <object class="GtkHBox" id="hbox2">
             <property name="can_focus">False</property>
             <child>
-              <widget class="GtkLabel" id="RootDir_Label">
+              <object class="GtkLabel" id="RootDir_Label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip" translatable="yes">The directory set here will be whats shown by default when the "browse" window opens. Leaving this empty will open the browse window where the file/torrent is currently located.</property>
@@ -20,7 +20,7 @@
 (Blank for default)</property>
                 <property name="justify">center</property>
                 <property name="track_visited_links">False</property>
-              </widget>
+              </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
@@ -29,7 +29,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkEntry" id="RootDir_Path">
+              <object class="GtkEntry" id="RootDir_Path">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
@@ -37,7 +37,7 @@
                 <property name="secondary_icon_activatable">False</property>
                 <property name="primary_icon_sensitive">True</property>
                 <property name="secondary_icon_sensitive">True</property>
-              </widget>
+              </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
@@ -45,20 +45,20 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkAspectFrame" id="aspectframe1">
+              <object class="GtkAspectFrame" id="aspectframe1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
                 <child>
-                  <widget class="GtkButton" id="RootDir_Browse">
+                  <object class="GtkButton" id="RootDir_Browse">
                     <property name="label" translatable="yes">Browse</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                  </widget>
+                  </object>
                 </child>
-              </widget>
+              </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
@@ -66,7 +66,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkCheckButton" id="RootDir_DisableTraversal">
+              <object class="GtkCheckButton" id="RootDir_DisableTraversal">
                 <property name="label" translatable="yes">Disable traversal
 above this directory.</property>
                 <property name="visible">True</property>
@@ -75,7 +75,7 @@ above this directory.</property>
                 <property name="tooltip" translatable="yes">Stops the browse window from moving past this directory. Useful for restricting the 'move' dialog to a folder/drive.</property>
                 <property name="image_position">top</property>
                 <property name="draw_indicator">True</property>
-              </widget>
+              </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
@@ -84,14 +84,14 @@ above this directory.</property>
                 <property name="position">3</property>
               </packing>
             </child>
-          </widget>
+          </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
         </child>
-      </widget>
+      </object>
     </child>
-  </widget>
-</glade-interface>
+  </object>
+</interface>

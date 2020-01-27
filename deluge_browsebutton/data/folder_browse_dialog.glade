@@ -37,7 +37,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkIconView" id="iconview1">
+              <object class="GtkTreeView" id="iconview1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="orientation">horizontal</property>

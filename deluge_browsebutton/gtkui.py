@@ -54,7 +54,7 @@ else:
 from deluge.ui.client import client
 import deluge.component as component
 import deluge.common
-from abc import ABC, abstractmethod
+import abc;
 
 
 importError = None
@@ -200,25 +200,26 @@ class BrowseDialog:
             self.selectedfolder = str(model[index][0])
             self.refillList("")
 
-class AbstractUI(ABC):
+class AbstractUI:
 
-    @abstractmethod
+    __metaclass__ = abc.ABCMeta
+    @abc.abstractmethod
     def getTheme(self):
         return
 
-    @abstractmethod
+    @abc.abstractmethod
     def OK(self):
         return 
 
-    @abstractmethod
+    @abc.abstractmethod
     def findEditor(self, button):
         return
 
-    @abstractmethod
+    @abc.abstractmethod
     def findButton(self, button):
         return
 
-    @abstractmethod
+    @abc.abstractmethod
     def deleteButton(self, button):
         return 
 
@@ -264,8 +265,8 @@ class BrowseButtonUI(AbstractUI):
 
     def on_apply_prefs(self):
         config = {
-            "RootDirPath":self.getWidget("RootDir_Path").get_text().rstrip('\\').rstrip('/'),
-            "DisableTraversal":str(self.getWidget("RootDir_DisableTraversal").get_active())
+            "RootDirPath":self.builder.get_object("RootDir_Path").get_text().rstrip('\\').rstrip('/'),
+            "DisableTraversal":str(self.builder.get_object("RootDir_DisableTraversal").get_active())
         }
         client.browsebutton.set_config(config)
         self.load_RootDirectory()
@@ -275,11 +276,11 @@ class BrowseButtonUI(AbstractUI):
 
     def cb_get_config(self, config):
         """callback for on show_prefs"""
-        self.getWidget("RootDir_Path").set_text(config["RootDirPath"])
-        self.getWidget("RootDir_DisableTraversal").set_active(self.str2bool(config["DisableTraversal"]))
+        self.builder.get_object("RootDir_Path").set_text(config["RootDirPath"])
+        self.builder.get_object("RootDir_DisableTraversal").set_active(self.str2bool(config["DisableTraversal"]))
         def browseClicked(something):
-            self.chooseFolder(self.getWidget("RootDir_Path"), None)
-        self.getWidget("RootDir_Browse").connect("clicked", browseClicked)
+            self.chooseFolder(self.builder.get_object("RootDir_Path"), None)
+        self.builder.get_object("RootDir_Browse").connect("clicked", browseClicked)
         
     def save_recent(self):
         config = {
@@ -310,9 +311,10 @@ class BrowseButtonUI(AbstractUI):
 
     def initializeGUI(self):
         self.builder = gtk.Builder()
+        self.builder.add_from_file(get_resource("config"))
         self.load_recent()
         self.load_RootDirectory()
-        component.get("Preferences").add_page("Browse Button", self.getWidget("prefs_box"))
+        component.get("Preferences").add_page("Browse Button", self.builder.get_object("prefs_box"))
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
         self.hooksregistered = True
@@ -418,7 +420,7 @@ class BrowseButtonUI(AbstractUI):
                              { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow} ]
 
 
-        for button in self.buttons() :
+        for button in self.buttons :
             editbox = self.findEditor(button)
             if editbox is None:
                 self.handleError()
@@ -469,10 +471,6 @@ if PY3:
     class Gtk3UI_(BrowseButtonUI):
         def getTheme(self):
             return gtk.IconTheme().get_default()
-
-        def makeBuilder(self):
-            self.builder = gtk.Builder()
-            self.builder.add_from_file(get_resource("config"))
 
         def OK(self):
             return gtk.STOCK_OK
