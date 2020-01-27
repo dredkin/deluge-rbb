@@ -50,3 +50,12 @@ When using this script for the first time you should build the plugin python egg
 
 When calling the batch script you can pass in any number of Python versions to build the eggs for.
 e.g. `build.bat "C:\Python26\python.exe" "C:\Python27\python.exe" "C:\Python34\python.exe"`
+
+## Known Issues
+
+Because of python's `setuptools` package "zip caching" technique sometimes deluge cannot update the plugins content right after upgrade. If you observe the following errors:
+
+ - `KeyError: CorePlugin.browsebutton`
+ - `ZipImportError: bad local file header`
+ 
+then the workaround is to restart **both** _client_ **and** _server_. After the restart the plugins cache is cleared and deluge correcly loads new plugin contents. So it is always advised to restart deluge after installing a new version of the plugin.
