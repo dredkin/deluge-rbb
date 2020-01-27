@@ -54,6 +54,8 @@ else:
 from deluge.ui.client import client
 import deluge.component as component
 import deluge.common
+from abc import ABC, abstractmethod
+
 
 importError = None
 try:
@@ -82,8 +84,7 @@ def widget_id(widget):
         return typename(widget) +" is not a GtkWidget"
 
 def widget_descr(widget):
-    return "[Type:"+xstr(widget.get_name() if hasattr(widget, "get_name") else typename(widget))+\
-          ", Name="+xstr(widget_id(widget))+"]"
+    return "[Type:" + xstr(typename(widget)) + ", Name="+xstr(widget_id(widget))+"]"
 
 def findwidget(container, name, verbose):
     if hasattr(container, 'get_children'):
@@ -141,18 +142,11 @@ class BrowseDialog:
             self.liststore = gtk.ListStore(gtk.gdk.Pixbuf, str)
         self.iconview = self.builder.get_object("iconview1")
         self.iconview.set_model(self.liststore)
-        if PY3:
-            column_pixbuf = gtk.TreeViewColumn("Icon", gtk.CellRendererPixbuf(), pixbuf=0)
-            self.iconview.append_column(column_pixbuf)
-            column_text = gtk.TreeViewColumn("Name", gtk.CellRendererText(), text=1)
-            self.iconview.append_column(column_text)
-            self.iconview.connect("row-activated", self.subfolder_activated)
-        else:
-            self.iconview.set_pixbuf_column(0)
-            self.iconview.set_text_column(1)
-            self.iconview.set_item_width(300)
-            self.iconview.connect("item-activated", self.subfolder_activated)
-
+        column_pixbuf = gtk.TreeViewColumn("Icon", gtk.CellRendererPixbuf(), pixbuf=0)
+        self.iconview.append_column(column_pixbuf)
+        column_text = gtk.TreeViewColumn("Name", gtk.CellRendererText(), text=1)
+        self.iconview.append_column(column_text)
+        self.iconview.connect("row-activated", self.subfolder_activated)
 
         self.refillList("")
         self.recent = recent
@@ -206,25 +200,25 @@ class BrowseDialog:
             self.selectedfolder = str(model[index][0])
             self.refillList("")
 
-class AbstractUI:
+class AbstractUI(ABC):
+
+    @abstractmethod
     def getTheme(self):
         return
 
-    def getWidget(self, id):
-        return
-
-    def makeBuilder(self):
-        return 
-
+    @abstractmethod
     def OK(self):
         return 
 
+    @abstractmethod
     def findEditor(self, button):
-        return True
+        return
 
+    @abstractmethod
     def findButton(self, button):
-        return True
+        return
 
+    @abstractmethod
     def deleteButton(self, button):
         return 
 
@@ -257,10 +251,11 @@ class BrowseButtonUI(AbstractUI):
           component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
           component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
         if self.buttons is not None:
-            for name in self.buttons.keys() :
-                self.deleteButton(self.buttons[name])
+            for button in self.buttons :
+                self.deleteButton(button)
                 self.handleError()
         self.swapMenuItems(self.newMoveItem, self.originalMoveItem)
+        self.originalMoveItem = None
 
     def handleError(self):
         if self.error is not None:
@@ -314,7 +309,7 @@ class BrowseButtonUI(AbstractUI):
             self.RootDirectoryDisableTraverse = self.str2bool(config["DisableTraversal"])
 
     def initializeGUI(self):
-        self.makeBuilder()
+        self.builder = gtk.Builder()
         self.load_recent()
         self.load_RootDirectory()
         component.get("Preferences").add_page("Browse Button", self.getWidget("prefs_box"))
@@ -327,47 +322,51 @@ class BrowseButtonUI(AbstractUI):
         self.handleError()
 
     def addMoveMenu(self):
+        log.debug("adding Menu Item")
         if self.newMoveItem is None:
             self.newMoveItem = gtk.ImageMenuItem(gtk.STOCK_SAVE_AS, 'Move Storage Advanced')
             self.newMoveItem.set_label("Move Storage")
             self.newMoveItem.show()
             self.newMoveItem.connect("activate", self.on_menu_activated, None)
 
-        torrentmenu = component.get("MenuBar").torrentmenu
-        position = 0
-
         if self.originalMoveItem is None:
+            torrentmenu = component.get("MenuBar").torrentmenu
+            position = 0
             for item in torrentmenu.get_children():
                 position = position + 1
                 if gtk.Buildable.get_name(item) == "menuitem_move":
                     self.originalMoveItemPosition = position
                     self.originalMoveItem = item
+                    log.debug("Original move menu item found.")
                     break
 
-        #Remove the original move button
-        #Insert into original "move" position
         self.swapMenuItems(self.originalMoveItem, self.newMoveItem)
+        log.debug("adding Menu Item ended")
 
     def swapMenuItems(self, old, new):
         torrentmenu = component.get("MenuBar").torrentmenu
+        #Remove the original move button
         if old is not None:
             torrentmenu.remove(old)
+            log.debug("Menu Item Removed"+old.get_label())
+        #Insert into original "move" position
         if new is not None:
             if self.originalMoveItemPosition >= 0 and self.originalMoveItemPosition < len(torrentmenu.get_children()):
                 torrentmenu.insert(new, self.originalMoveItemPosition)
             else:
                 torrentmenu.append(new)
+            log.debug("Menu Item Inserted:"+new.get_label())
 
     def on_menu_activated(self, widget=None, data=None):
         client.core.get_torrent_status(component.get("TorrentView").get_selected_torrent(), ["save_path"]).addCallback(self.show_move_storage_dialog)
 
     def show_move_storage_dialog(self, status):
-        glade = gtk.Builder.new_from_file(get_resource("myMove_storage_dialog"))
-        self.move_storage_dialog = glade.get_object("move_storage_dialog")
+        builder = gtk.Builder.new_from_file(get_resource("myMove_storage_dialog"))
+        self.move_storage_dialog = builder.get_object("move_storage_dialog")
         self.move_storage_dialog.set_transient_for(component.get("MainWindow").window)
-        self.move_storage_dialog_entry = glade.get_object("entry_destination")
-        self.move_storage_browse_button = glade.get_object("browse")
-        self.move_storage_entry_destination = glade.get_object("entry_destination")
+        self.move_storage_dialog_entry = builder.get_object("entry_destination")
+        self.move_storage_browse_button = builder.get_object("browse")
+        self.move_storage_entry_destination = builder.get_object("entry_destination")
         self.move_storage_dialog_entry.set_text(status["save_path"])
         def on_dialog_response_event(widget, response_id):
 
@@ -410,17 +409,16 @@ class BrowseButtonUI(AbstractUI):
             self.addDialog = self.findDialog("AddTorrentDialog")
 
         if PY3:
-            self.buttons = { 'store' : { 'id': 'hbox_download_location_chooser' , 'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
-                         'completed' : { 'id': 'hbox_move_completed_chooser' ,    'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
-                     'completed_tab' : { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None} }
+            self.buttons = [ { 'id': 'hbox_download_location_chooser' , 'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_move_completed_chooser' ,    'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None} ]
         else:
-            self.buttons = { 'store' : { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
-                         'completed' : { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
-                     'completed_tab' : { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow} }
+            self.buttons = [ { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
+                             { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
+                             { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow} ]
 
 
-        for name in self.buttons.keys() :
-            button = self.buttons[name]
+        for button in self.buttons() :
             editbox = self.findEditor(button)
             if editbox is None:
                 self.handleError()
@@ -463,17 +461,14 @@ class BrowseButtonUI(AbstractUI):
         dialog.dialog.destroy()
 
     def on_browse_button_clicked(self, widget):
-        for name in self.buttons.keys() :
-            if widget == self.buttons[name]['widget']:
-                return self.chooseFolder(self.buttons[name]['editbox'], self.buttons[name]['window'])
+        for button in self.buttons :
+            if widget == button['widget']:
+                return self.chooseFolder(button['editbox'], button['window'])
 
 if PY3:
     class Gtk3UI_(BrowseButtonUI):
         def getTheme(self):
             return gtk.IconTheme().get_default()
-
-        def getWidget(self, id):
-            return self.builder.get_object(id)
 
         def makeBuilder(self):
             self.builder = gtk.Builder()
@@ -518,9 +513,6 @@ else:
         def getTheme(self):
             return gtk.icon_theme_get_default()
 
-        def getWidget(self, id):
-            return self.glade.get_widget(id)
-            
         def makeBuilder(self):
             self.glade = gtk.glade.XML(get_resource("config"))
 
@@ -559,10 +551,11 @@ else:
             return button
 
         def deleteButton(self, button):
-            if button['widget'] is not None:
-                if button['widget'].parent is None:
+            btn = button['widget']
+            if btn is not None:
+                if btn.parent is None:
                     return False
-                button['widget'].parent.remove(button)
+                btn.parent.remove(btn)
                 button['widget'] = None
             return True
 
