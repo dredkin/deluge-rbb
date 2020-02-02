@@ -201,7 +201,6 @@ class BrowseDialog:
             self.refillList("")
 
 class AbstractUI:
-
     __metaclass__ = abc.ABCMeta
     @abc.abstractmethod
     def getTheme(self):
@@ -326,44 +325,46 @@ class BrowseButtonUI(AbstractUI):
     def addMoveMenu(self):
         log.debug("adding Menu Item")
         if self.newMoveItem is None:
-            self.newMoveItem = gtk.ImageMenuItem(gtk.STOCK_SAVE_AS, 'Move Storage Advanced')
-            self.newMoveItem.set_label("Move Storage")
+            self.newMoveItem = gtk.ImageMenuItem(gtk.STOCK_SAVE_AS, 'move_storage_rbb')
+            self.newMoveItem.set_label("Move Storage...")
             self.newMoveItem.show()
             self.newMoveItem.connect("activate", self.on_menu_activated, None)
 
         if self.originalMoveItem is None:
+            log.debug("Searching for original menu item...")
             torrentmenu = component.get("MenuBar").torrentmenu
             position = 0
             for item in torrentmenu.get_children():
                 position = position + 1
-                if gtk.Buildable.get_name(item) == "menuitem_move":
+                if widget_id(item) == "menuitem_move":
                     self.originalMoveItemPosition = position
                     self.originalMoveItem = item
                     log.debug("Original move menu item found.")
                     break
 
         self.swapMenuItems(self.originalMoveItem, self.newMoveItem)
-        log.debug("adding Menu Item ended")
+        log.debug("adding Menu Item end")
 
     def swapMenuItems(self, old, new):
         torrentmenu = component.get("MenuBar").torrentmenu
         #Remove the original move button
         if old is not None:
             torrentmenu.remove(old)
-            log.debug("Menu Item Removed"+old.get_label())
+            log.debug("Menu Item Removed: "+xstr(old.get_label()))
         #Insert into original "move" position
         if new is not None:
             if self.originalMoveItemPosition >= 0 and self.originalMoveItemPosition < len(torrentmenu.get_children()):
                 torrentmenu.insert(new, self.originalMoveItemPosition)
             else:
                 torrentmenu.append(new)
-            log.debug("Menu Item Inserted:"+new.get_label())
+            log.debug("Menu Item Inserted:"+xstr(new.get_label()))
 
     def on_menu_activated(self, widget=None, data=None):
         client.core.get_torrent_status(component.get("TorrentView").get_selected_torrent(), ["save_path"]).addCallback(self.show_move_storage_dialog)
 
     def show_move_storage_dialog(self, status):
-        builder = gtk.Builder.new_from_file(get_resource("myMove_storage_dialog"))
+        builder = gtk.Builder()
+        builder.add_from_file(get_resource("myMove_storage_dialog"))
         self.move_storage_dialog = builder.get_object("move_storage_dialog")
         self.move_storage_dialog.set_transient_for(component.get("MainWindow").window)
         self.move_storage_dialog_entry = builder.get_object("entry_destination")
