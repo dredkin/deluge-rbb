@@ -53,9 +53,16 @@ e.g. `build.bat "C:\Python26\python.exe" "C:\Python27\python.exe" "C:\Python34\p
 
 ## Known Issues
 
-Because of python's `setuptools` package "zip caching" technique sometimes deluge cannot update the plugins content right after upgrade. If you observe the following errors:
+Because of python's `setuptools` package "zip caching" technique sometimes deluge cannot update the plugins content right after upgrade. This can cause the following errors in LOG file:
 
  - `KeyError: CorePlugin.browsebutton`
  - `ZipImportError: bad local file header`
  
-then the workaround is to restart **both** _client_ **and** _server_. After the restart the plugins cache is cleared and deluge correcly loads new plugin contents. So it is always advised to restart deluge after installing a new version of the plugin.
+The workaround is:
+
+ 1. Disable (uncheck) plugin in settings dialog
+ 2. Exit _client_ 
+ 3. **Restart** _server_.
+ 4. Start client and enable plugin in settings again
+
+After this procedure the plugins cache is cleared and deluge correctly loads new plugin package. So it is always advised to restart deluge after installing a new version of the plugin.
