@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
-  <object class="GtkWindow" id="Config Window">
+  <object class="GtkWindow" id="config_window">
     <property name="can_focus">False</property>
     <child>
       <object class="GtkBox" id="prefs_box">
@@ -28,7 +28,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="RootDir_Path">
+              <object class="GtkEntry" id="entry_root_path">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>

@@ -74,26 +74,29 @@ def xstr(s):
 def typename(x):
     return type(x).__name__
 
-def widget_id(widget):
+def widget_id(widget, forcepy3 = False):
     if issubclass(type(widget), gtk.Widget):
-        if PY3:
-            return gtk.Buildable.get_name(widget)
+        if PY3 or forcepy3:
+            if gtk.Buildable:
+                return gtk.Buildable.get_name(widget)
+            else:
+                return "gtk.Buildable is not defined!"
         else:
             return widget.get_name()
     else:
         return typename(widget) +" is not a GtkWidget"
 
 def widget_descr(widget):
-    return "[Type:" + xstr(typename(widget)) + ", Name="+xstr(widget_id(widget))+"]"
+    return "[Type:" + xstr(typename(widget)) + ", Name="+xstr(widget_id(widget))+"/"+xstr(widget_id(widget, True))+"]"
 
 def findwidget(container, name, verbose):
+    if verbose:
+        showMessage(None, "\nSearching for entry id:" +name+ "\n inside of:" + widget_descr(container))
     if hasattr(container, 'get_children'):
         ch = container.get_children()
         for widget in ch:
-            if widget_id(widget) == name:
+            if (widget_id(widget, False) == name) or (widget_id(widget, True) == name):
               return widget
-            if verbose:
-                showMessage(None, widget_descr(widget))
             ret = findwidget(widget, name, verbose)
             if ret is not None:
               return ret
@@ -123,13 +126,13 @@ def caseInsensitive(key):
 class BrowseDialog:
     def __init__(self, path, recent, parent, RootDirectory, RootDirectoryDisableTraverse):
         self.selectedfolder = path
-        self.builder = gtk.Builder()
-        self.builder.add_from_file(get_resource('folder_browse_dialog'))
-        self.dialog = self.builder.get_object("browse_folders_dialog")
+        self.dialogbuilder = gtk.Builder()
+        self.dialogbuilder.add_from_file(get_resource('folder_browse_dialog'))
+        self.dialog = self.dialogbuilder.get_object("browse_folders_dialog")
         self.dialog.set_transient_for(parent)
 
         self.recentliststore = gtk.ListStore(str)
-        self.label = self.builder.get_object("selected_folder")
+        self.label = self.dialogbuilder.get_object("selected_folder")
         self.label.set_model(self.recentliststore)
         cell = gtk.CellRendererText()
         self.label.pack_start(cell, True)
@@ -140,7 +143,7 @@ class BrowseDialog:
             self.liststore = gtk.ListStore(GdkPixbuf.Pixbuf, str)
         else:
             self.liststore = gtk.ListStore(gtk.gdk.Pixbuf, str)
-        self.iconview = self.builder.get_object("iconview1")
+        self.iconview = self.dialogbuilder.get_object("iconview1")
         self.iconview.set_model(self.liststore)
         column_pixbuf = gtk.TreeViewColumn("Icon", gtk.CellRendererPixbuf(), pixbuf=0)
         self.iconview.append_column(column_pixbuf)
@@ -154,9 +157,11 @@ class BrowseDialog:
         self.RootDirectoryDisableTraverse = RootDirectoryDisableTraverse
 
     def refillList(self, subfolder):
+        log.debug("RBB:Getting folders list for "+self.selectedfolder + " / " + subfolder )
         client.browsebutton.get_folder_list(self.selectedfolder, subfolder).addCallback(self.get_folder_list_callback)
 
     def get_folder_list_callback(self, results):
+        log.debug("RBB:got results after folder selection")
         if results[3]:
             showMessage(None, results[3])
             return
@@ -207,10 +212,6 @@ class AbstractUI:
         return
 
     @abc.abstractmethod
-    def OK(self):
-        return 
-
-    @abc.abstractmethod
     def findEditor(self, button):
         return
 
@@ -226,12 +227,17 @@ class BrowseButtonUI(AbstractUI):
     error = None
     buttons = None
     addDialog = None
+    moveDialog = None
     mainWindow = None
-    originalMoveItem = None
+    configPage = None
+    prefDialog = None
     hooksregistered = False
+    originalMoveItem = None
     originalMoveItemPosition = -1
     originalMoveItem = None
     newMoveItem = None
+    move_storage_dialog_entry = None
+
     recent = []
     
     def str2bool(self,v):
@@ -246,6 +252,7 @@ class BrowseButtonUI(AbstractUI):
 
     def disable(self):
         self.error = None
+        self.configPage = None
         component.get("Preferences").remove_page("Browse Button")
         if self.hooksregistered:
           component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
@@ -256,6 +263,9 @@ class BrowseButtonUI(AbstractUI):
                 self.handleError()
         self.swapMenuItems(self.newMoveItem, self.originalMoveItem)
         self.originalMoveItem = None
+        self.mainWindow = None
+        self.addDialog = None
+        self.prefDialog = None
 
     def handleError(self):
         if self.error is not None:
@@ -264,8 +274,8 @@ class BrowseButtonUI(AbstractUI):
 
     def on_apply_prefs(self):
         config = {
-            "RootDirPath":self.builder.get_object("RootDir_Path").get_text().rstrip('\\').rstrip('/'),
-            "DisableTraversal":str(self.builder.get_object("RootDir_DisableTraversal").get_active())
+            "RootDirPath":self.configbuilder.get_object("entry_root_path").get_text().rstrip('\\').rstrip('/'),
+            "DisableTraversal":str(self.configbuilder.get_object("RootDir_DisableTraversal").get_active())
         }
         client.browsebutton.set_config(config)
         self.load_RootDirectory()
@@ -275,11 +285,8 @@ class BrowseButtonUI(AbstractUI):
 
     def cb_get_config(self, config):
         """callback for on show_prefs"""
-        self.builder.get_object("RootDir_Path").set_text(config["RootDirPath"])
-        self.builder.get_object("RootDir_DisableTraversal").set_active(self.str2bool(config["DisableTraversal"]))
-        def browseClicked(something):
-            self.chooseFolder(self.builder.get_object("RootDir_Path"), None)
-        self.builder.get_object("RootDir_Browse").connect("clicked", browseClicked)
+        self.configbuilder.get_object("entry_root_path").set_text(config["RootDirPath"])
+        self.configbuilder.get_object("RootDir_DisableTraversal").set_active(self.str2bool(config["DisableTraversal"]))
         
     def save_recent(self):
         config = {
@@ -309,11 +316,12 @@ class BrowseButtonUI(AbstractUI):
             self.RootDirectoryDisableTraverse = self.str2bool(config["DisableTraversal"])
 
     def initializeGUI(self):
-        self.builder = gtk.Builder()
-        self.builder.add_from_file(get_resource("config"))
+        self.configbuilder = gtk.Builder()
+        self.configbuilder.add_from_file(get_resource("config"))
         self.load_recent()
         self.load_RootDirectory()
-        component.get("Preferences").add_page("Browse Button", self.builder.get_object("prefs_box"))
+        self.configPage = self.configbuilder.get_object("prefs_box")
+        component.get("Preferences").add_page("Browse Button", self.configPage)
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
         self.hooksregistered = True
@@ -362,63 +370,68 @@ class BrowseButtonUI(AbstractUI):
     def on_menu_activated(self, widget=None, data=None):
         client.core.get_torrent_status(component.get("TorrentView").get_selected_torrent(), ["save_path"]).addCallback(self.show_move_storage_dialog)
 
+    def makeMoveStorageDialog(self):
+        self.movedialogbuilder = gtk.Builder()
+        self.movedialogbuilder.add_from_file(get_resource("myMove_storage_dialog"))
+        result = self.movedialogbuilder.get_object("move_storage_dialog")
+        result.set_transient_for(component.get("MainWindow").window)
+        self.move_storage_dialog_entry = self.movedialogbuilder.get_object("entry_destination")
+        result.connect("response", self.on_dialog_response_event)
+        return result
+
     def show_move_storage_dialog(self, status):
-        builder = gtk.Builder()
-        builder.add_from_file(get_resource("myMove_storage_dialog"))
-        self.move_storage_dialog = builder.get_object("move_storage_dialog")
-        self.move_storage_dialog.set_transient_for(component.get("MainWindow").window)
-        self.move_storage_dialog_entry = builder.get_object("entry_destination")
-        self.move_storage_browse_button = builder.get_object("browse")
-        self.move_storage_entry_destination = builder.get_object("entry_destination")
         self.move_storage_dialog_entry.set_text(status["save_path"])
-        def on_dialog_response_event(widget, response_id):
+        self.moveDialog.show()
 
-            def on_core_result(result):
-                # Delete references
-                del self.move_storage_dialog
-                del self.move_storage_dialog_entry
+    def on_dialog_response_event(self, widget, response_id):
+        if response_id == gtk.RESPONSE_OK:
+            log.debug("Moving torrents to %s", self.move_storage_dialog_entry.get_text())
+            path = self.move_storage_dialog_entry.get_text()
+            client.core.move_storage(component.get("TorrentView").get_selected_torrents(), path).addCallback(self.on_core_result)
+        self.moveDialog.hide()
 
-            if response_id == self.OK():
-                log.debug("Moving torrents to %s",
-                          self.move_storage_dialog_entry.get_text())
-                path = self.move_storage_dialog_entry.get_text()
-                client.core.move_storage(
-                    component.get("TorrentView").get_selected_torrents(), path
-                ).addCallback(on_core_result)
-            self.move_storage_dialog.hide()
+    def on_core_result(self, result):
+        log.debug(xstr(result))
+        
 
-        def browseClicked(something):
-            self.chooseFolder(self.move_storage_entry_destination, None)
-        self.move_storage_dialog.connect("response", on_dialog_response_event)
-        self.move_storage_browse_button.connect("clicked", browseClicked)
-        self.move_storage_dialog.show()
-
-    def findDialog(self, name):
-        comp = component.get(name)
+    def findDialog(self, compName, attribute):
+        comp = component.get(compName)
         if comp is None:
-            self.error = "Window " + name + " not found!"
+            self.error = "Window " + compName + " not found!"
             self.handleError
-        if hasattr(comp, "dialog"):
-            return comp.dialog
-        elif hasattr(comp, "window"):
-            return comp.window
+        if hasattr(comp, attribute):
+            return getattr(comp, attribute)
         else:
-            return comp
+            self.error = "Component "+compName+" has no attribute "+attribute
+        self.handleError
+        return None
 
     def makeButtons(self):
         if self.mainWindow is None:
-            self.mainWindow = self.findDialog("MainWindow")
+            self.mainWindow = self.findDialog("MainWindow", "window")
         if self.addDialog is None:
-            self.addDialog = self.findDialog("AddTorrentDialog")
+            self.addDialog = self.findDialog("AddTorrentDialog", "dialog")
+        if self.prefDialog is None:
+            self.prefDialog = self.findDialog("Preferences", "pref_dialog")
+        if self.moveDialog is None:
+            self.moveDialog = self.makeMoveStorageDialog()
 
         if PY3:
             self.buttons = [ { 'id': 'hbox_download_location_chooser' , 'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
                              { 'id': 'hbox_move_completed_chooser' ,    'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
                              { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None} ]
         else:
-            self.buttons = [ { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
+            self.buttons = [ \
+                             { 'id': 'entry_root_path' , 'editbox': None, 'widget': None , 'window': self.configPage}, \
+                             { 'id': 'entry_destination' , 'editbox': None, 'widget': None , 'window': self.moveDialog},
+                             { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
                              { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
-                             { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow} ]
+                             { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow}, \
+                             { 'id': 'entry_autoadd' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                             { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                             { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                             { 'id': 'entry_torrents_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                 ]
 
 
         for button in self.buttons :
@@ -449,9 +462,11 @@ class BrowseButtonUI(AbstractUI):
             startDir = self.RootDirectory
         else:
             startDir = editbox.get_text()
+        log.debug("RBB: Initial folder:" + startDir)
+        if not issubclass(type(parent), gtk.Window):
+            parent = None
         dialog = BrowseDialog(startDir, self.recent, parent, self.RootDirectory, self.RootDirectoryDisableTraverse)
-        id = dialog.dialog.run()
-        if id > 0:
+        if dialog.dialog.run() == gtk.RESPONSE_OK:
             log.debug("RBB:folder chosen:"+dialog.selectedfolder)
             editbox.set_text(dialog.selectedfolder)
             log.debug("RBB:New content of " + widget_id(editbox) + ":" + editbox.get_text())
@@ -472,9 +487,6 @@ if PY3:
     class Gtk3UI_(BrowseButtonUI):
         def getTheme(self):
             return gtk.IconTheme().get_default()
-
-        def OK(self):
-            return gtk.STOCK_OK
 
         def findEditor(self, button):
             hbox = self.findwidget(button['window'], button['id'], False)
@@ -512,12 +524,6 @@ else:
         def getTheme(self):
             return gtk.icon_theme_get_default()
 
-        def makeBuilder(self):
-            self.glade = gtk.glade.XML(get_resource("config"))
-
-        def OK(self):
-            return gtk.RESPONSE_OK
-
         def findEditor(self, button):
             dialog = button['window']
             id = button['id']
@@ -539,15 +545,15 @@ else:
             if hbox is None:
                 self.error = "hbox not found for "+button['id']+"!"
                 return None
-            image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_DIRECTORY,  gtk.ICON_SIZE_BUTTON)
-            button = gtk.Button()
-            button.set_image(image)
-            button.set_label("Browse..")
-            button.set_size_request(50,-1)
-            hbox.pack_end(button)
-            button.show()
-            return button
+            #image = gtk.Image()
+            #image.set_from_stock(gtk.STOCK_DIRECTORY,  gtk.ICON_SIZE_BUTTON)
+            btn = gtk.Button()
+            #button.set_image(image)
+            btn.set_label("...")
+            btn.set_size_request(50,20)
+            hbox.pack_end(btn, False, False)
+            btn.show()
+            return btn
 
         def deleteButton(self, button):
             btn = button['widget']

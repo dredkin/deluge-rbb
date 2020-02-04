@@ -138,7 +138,6 @@ class Core(CorePluginBase):
     def serverlog(self, line):
         log.debug(line)
 
-    @export
     def make_current_locale(self, string, name):
         if PY3:
             return string
