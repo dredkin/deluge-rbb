@@ -223,6 +223,10 @@ class AbstractUI:
     def deleteButton(self, button):
         return 
 
+    @abc.abstractmethod
+    def OK(self):
+        return 
+
 class BrowseButtonUI(AbstractUI):
     error = None
     buttons = None
@@ -384,7 +388,7 @@ class BrowseButtonUI(AbstractUI):
         self.moveDialog.show()
 
     def on_dialog_response_event(self, widget, response_id):
-        if response_id == gtk.RESPONSE_OK:
+        if response_id == self.OK():
             log.debug("Moving torrents to %s", self.move_storage_dialog_entry.get_text())
             path = self.move_storage_dialog_entry.get_text()
             client.core.move_storage(component.get("TorrentView").get_selected_torrents(), path).addCallback(self.on_core_result)
@@ -466,7 +470,7 @@ class BrowseButtonUI(AbstractUI):
         if not issubclass(type(parent), gtk.Window):
             parent = None
         dialog = BrowseDialog(startDir, self.recent, parent, self.RootDirectory, self.RootDirectoryDisableTraverse)
-        if dialog.dialog.run() == gtk.RESPONSE_OK:
+        if dialog.dialog.run() == self.OK():
             log.debug("RBB:folder chosen:"+dialog.selectedfolder)
             editbox.set_text(dialog.selectedfolder)
             log.debug("RBB:New content of " + widget_id(editbox) + ":" + editbox.get_text())
@@ -519,6 +523,9 @@ if PY3:
                     btn.connect("clicked", button['oldsignal'])
                 button['widget'] = None
             return True
+
+        def OK(self):
+            return gtk.RESPONSE_OK
 else:
     class GtkUI_(BrowseButtonUI):
         def getTheme(self):
@@ -564,6 +571,8 @@ else:
                 button['widget'] = None
             return True
 
+        def OK(self):
+            return gtk.ResponseType.OK
 if PY3:
     class Gtk3UI(Gtk3PluginBase):
         UI = Gtk3UI_()
