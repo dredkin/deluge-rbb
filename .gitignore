@@ -39,3 +39,4 @@ release
 /.idea
 /release
 .gitignore
+.ropeproject
