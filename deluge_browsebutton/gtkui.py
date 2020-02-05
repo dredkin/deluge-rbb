@@ -437,26 +437,26 @@ class BrowseButtonUI(AbstractUI):
 
         if PY3:
             self.buttons = [ \
-                             { 'id': 'hbox_download_location_chooser' , 'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_chooser' ,    'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None}, \
-                             { 'id': 'hbox_download_to_path_chooser',   'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_to_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_download_location_chooser' ,     'editbox': None, 'widget': None , 'window': self.addDialog,  'oldsignal': None}, \
+                             { 'id': 'hbox_move_completed_chooser' ,        'editbox': None, 'widget': None , 'window': self.addDialog,  'oldsignal': None}, \
+                             { 'id': 'hbox_move_completed_path_chooser',    'editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None}, \
+                             { 'id': 'hbox_root_path_chooser',              'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_destination_chooser',            'editbox': None, 'widget': None , 'window': self.moveDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_download_to_path_chooser',       'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_move_completed_to_path_chooser', 'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
                              { 'id': 'hbox_copy_torrent_files_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_root_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_destination_chooser','editbox': None, 'widget': None , 'window': self.moveDialog, 'oldsignal': None}, \
                            ]
         else:
             self.buttons = [ \
-                             { 'id': 'entry_root_path' , 'editbox': None, 'widget': None , 'window': self.configPage}, \
-                             { 'id': 'entry_destination' , 'editbox': None, 'widget': None , 'window': self.moveDialog},
-                             { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
+                             { 'id': 'entry_download_path' ,       'editbox': None, 'widget': None , 'window': self.addDialog}, \
                              { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
-                             { 'id': 'entry_move_completed' , 'editbox': None, 'widget': None , 'window': self.mainWindow}, \
-                             { 'id': 'entry_autoadd' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                             { 'id': 'entry_move_completed' ,      'editbox': None, 'widget': None , 'window': self.mainWindow}, \
+                             { 'id': 'entry_root_path' ,           'editbox': None, 'widget': None , 'window': self.configPage}, \
+                             { 'id': 'entry_destination' ,         'editbox': None, 'widget': None , 'window': self.moveDialog},
+                             { 'id': 'entry_download_path' ,       'editbox': None, 'widget': None , 'window': self.prefDialog}, \
                              { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                             { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                             { 'id': 'entry_torrents_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                             { 'id': 'entry_torrents_path' ,       'editbox': None, 'widget': None , 'window': self.prefDialog}, \
+                             { 'id': 'entry_autoadd' ,             'editbox': None, 'widget': None , 'window': self.prefDialog}, \
                            ]
 
 
