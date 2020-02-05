@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <interface>
   <!-- interface-requires gtk+ 2.6 -->
   <!-- interface-naming-policy toplevel-contextual -->
@@ -14,7 +14,7 @@
               <object class="GtkLabel" id="RootDir_Label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip" translatable="yes">The directory set here will be whats shown by default when the "browse" window opens. Leaving this empty will open the browse window where the file/torrent is currently located.</property>
+                <property name="tooltip-text" translatable="yes">The directory set here will be whats shown by default when the "browse" window opens. Leaving this empty will open the browse window where the file/torrent is currently located.</property>
                 <property name="xalign">0.10999999940395355</property>
                 <property name="label" translatable="yes">Root directory
 (Blank for default)</property>
@@ -32,7 +32,7 @@
               <object class="GtkEntry" id="entry_root_path">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
+                <property name="invisible_char">&#x25CF;</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="primary_icon_sensitive">True</property>
@@ -51,7 +51,7 @@ above this directory.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="tooltip" translatable="yes">Stops the browse window from moving past this directory. Useful for restricting the 'move' dialog to a folder/drive.</property>
+                <property name="tooltip-text" translatable="yes">Stops the browse window from moving past this directory. Useful for restricting the 'move' dialog to a folder/drive.</property>
                 <property name="image_position">top</property>
                 <property name="draw_indicator">True</property>
               </object>
