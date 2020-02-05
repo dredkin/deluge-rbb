@@ -97,8 +97,8 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="1">okButton</action-widget>
-      <action-widget response="0">cancelButton</action-widget>
+      <action-widget response="-5">okButton</action-widget>
+      <action-widget response="-6">cancelButton</action-widget>
     </action-widgets>
   </object>
 </interface>

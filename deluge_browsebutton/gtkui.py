@@ -46,6 +46,7 @@ if PY3:
     import logging
     log = logging.getLogger(__name__)
     from deluge.plugins.pluginbase import Gtk3PluginBase
+    from deluge.ui.gtk3.path_chooser import PathChooser
 else:
     from deluge.log import LOG as log
     import gtk
@@ -241,6 +242,7 @@ class BrowseButtonUI(AbstractUI):
     originalMoveItem = None
     newMoveItem = None
     move_storage_dialog_entry = None
+    config_root_path_entry = None
 
     recent = []
     
@@ -278,8 +280,8 @@ class BrowseButtonUI(AbstractUI):
 
     def on_apply_prefs(self):
         config = {
-            "RootDirPath":self.configbuilder.get_object("entry_root_path").get_text().rstrip('\\').rstrip('/'),
-            "DisableTraversal":str(self.configbuilder.get_object("RootDir_DisableTraversal").get_active())
+            "RootDirPath": self.config_root_path_entry.get_text().rstrip('\\').rstrip('/'),
+            "DisableTraversal": str(self.configbuilder.get_object("RootDir_DisableTraversal").get_active())
         }
         client.browsebutton.set_config(config)
         self.load_RootDirectory()
@@ -289,7 +291,7 @@ class BrowseButtonUI(AbstractUI):
 
     def cb_get_config(self, config):
         """callback for on show_prefs"""
-        self.configbuilder.get_object("entry_root_path").set_text(config["RootDirPath"])
+        self.config_root_path_entry.set_text(config["RootDirPath"])
         self.configbuilder.get_object("RootDir_DisableTraversal").set_active(self.str2bool(config["DisableTraversal"]))
         
     def save_recent(self):
@@ -322,9 +324,16 @@ class BrowseButtonUI(AbstractUI):
     def initializeGUI(self):
         self.configbuilder = gtk.Builder()
         self.configbuilder.add_from_file(get_resource("config"))
+        self.configPage = self.configbuilder.get_object("prefs_box")
+        if PY3:
+            hbox = self.configbuilder.get_object("hbox_root_path_chooser")
+            self.config_root_path_entry = PathChooser('config_root_paths_list', self.prefDialog)
+            hbox.add(self.config_root_path_entry)
+            hbox.show_all()
+        else:
+            self.config_root_path_entry = self.configbuilder.get_object("entry_root_path")
         self.load_recent()
         self.load_RootDirectory()
-        self.configPage = self.configbuilder.get_object("prefs_box")
         component.get("Preferences").add_page("Browse Button", self.configPage)
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
@@ -379,7 +388,13 @@ class BrowseButtonUI(AbstractUI):
         self.movedialogbuilder.add_from_file(get_resource("myMove_storage_dialog"))
         result = self.movedialogbuilder.get_object("move_storage_dialog")
         result.set_transient_for(component.get("MainWindow").window)
-        self.move_storage_dialog_entry = self.movedialogbuilder.get_object("entry_destination")
+        if PY3:
+            hbox = self.movedialogbuilder.get_object("hbox_destination_chooser")
+            self.move_storage_dialog_entry = PathChooser('move_completed_paths_list', result)
+            hbox.add(self.move_storage_dialog_entry)
+            hbox.show_all()
+        else:
+            self.move_storage_dialog_entry = self.movedialogbuilder.get_object("entry_destination")
         result.connect("response", self.on_dialog_response_event)
         return result
 
@@ -421,9 +436,16 @@ class BrowseButtonUI(AbstractUI):
             self.moveDialog = self.makeMoveStorageDialog()
 
         if PY3:
-            self.buttons = [ { 'id': 'hbox_download_location_chooser' , 'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
+            self.buttons = [ \
+                             { 'id': 'hbox_download_location_chooser' , 'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
                              { 'id': 'hbox_move_completed_chooser' ,    'editbox': None, 'widget': None , 'window': self.addDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None} ]
+                             { 'id': 'hbox_move_completed_path_chooser','editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None}, \
+                             { 'id': 'hbox_download_to_path_chooser',   'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_move_completed_to_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_copy_torrent_files_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_root_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
+                             { 'id': 'hbox_destination_chooser','editbox': None, 'widget': None , 'window': self.moveDialog, 'oldsignal': None}, \
+                           ]
         else:
             self.buttons = [ \
                              { 'id': 'entry_root_path' , 'editbox': None, 'widget': None , 'window': self.configPage}, \
@@ -435,7 +457,7 @@ class BrowseButtonUI(AbstractUI):
                              { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
                              { 'id': 'entry_download_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
                              { 'id': 'entry_torrents_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                 ]
+                           ]
 
 
         for button in self.buttons :
@@ -525,7 +547,7 @@ if PY3:
             return True
 
         def OK(self):
-            return gtk.RESPONSE_OK
+            return gtk.ResponseType.OK
 else:
     class GtkUI_(BrowseButtonUI):
         def getTheme(self):
@@ -572,7 +594,7 @@ else:
             return True
 
         def OK(self):
-            return gtk.ResponseType.OK
+            return gtk.RESPONSE_OK
 if PY3:
     class Gtk3UI(Gtk3PluginBase):
         UI = Gtk3UI_()
