@@ -123,6 +123,16 @@ def getTheme():
 def caseInsensitive(key):
     return key.lower()
 
+class ButtonRec:
+    id = None
+    editbox = None
+    widget = None
+    window = None
+    click_handler_id = None
+    oldsignal = None
+    def __init__(self, id, window):
+        self.id = id
+        self.window = window
 
 class BrowseDialog:
     def __init__(self, path, recent, parent, RootDirectory, RootDirectoryDisableTraverse):
@@ -230,7 +240,7 @@ class AbstractUI:
 
 class BrowseButtonUI(AbstractUI):
     error = None
-    buttons = None
+    buttons = []
     addDialog = None
     moveDialog = None
     mainWindow = None
@@ -258,15 +268,16 @@ class BrowseButtonUI(AbstractUI):
 
     def disable(self):
         self.error = None
+        if self.buttons is not None:
+            for button in self.buttons :
+                self.deleteButton(button)
+                self.handleError()
+        self.buttons.clear()
         self.configPage = None
         component.get("Preferences").remove_page("Browse Button")
         if self.hooksregistered:
           component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
           component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
-        if self.buttons is not None:
-            for button in self.buttons :
-                self.deleteButton(button)
-                self.handleError()
         self.swapMenuItems(self.newMoveItem, self.originalMoveItem)
         self.originalMoveItem = None
         self.mainWindow = None
@@ -426,6 +437,7 @@ class BrowseButtonUI(AbstractUI):
         return None
 
     def makeButtons(self):
+        log.debug('starting to add/connect buttons...')
         if self.mainWindow is None:
             self.mainWindow = self.findDialog("MainWindow", "window")
         if self.addDialog is None:
@@ -436,45 +448,43 @@ class BrowseButtonUI(AbstractUI):
             self.moveDialog = self.makeMoveStorageDialog()
 
         if PY3:
-            self.buttons = [ \
-                             { 'id': 'hbox_download_location_chooser' ,     'editbox': None, 'widget': None , 'window': self.addDialog,  'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_chooser' ,        'editbox': None, 'widget': None , 'window': self.addDialog,  'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_path_chooser',    'editbox': None, 'widget': None , 'window': self.mainWindow, 'oldsignal': None}, \
-                             { 'id': 'hbox_root_path_chooser',              'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_destination_chooser',            'editbox': None, 'widget': None , 'window': self.moveDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_download_to_path_chooser',       'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_move_completed_to_path_chooser', 'editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                             { 'id': 'hbox_copy_torrent_files_path_chooser','editbox': None, 'widget': None , 'window': self.prefDialog, 'oldsignal': None}, \
-                           ]
+            self.buttons.append(ButtonRec('hbox_download_location_chooser' ,      self.addDialog))
+            self.buttons.append(ButtonRec('hbox_move_completed_chooser' ,         self.addDialog))
+            self.buttons.append(ButtonRec('hbox_move_completed_path_chooser',     self.mainWindow))
+            self.buttons.append(ButtonRec('hbox_root_path_chooser',               self.prefDialog))
+            self.buttons.append(ButtonRec('hbox_destination_chooser',             self.moveDialog))
+            self.buttons.append(ButtonRec('hbox_download_to_path_chooser',        self.prefDialog))
+            self.buttons.append(ButtonRec('hbox_move_completed_to_path_chooser',  self.prefDialog))
+            self.buttons.append(ButtonRec('hbox_copy_torrent_files_path_chooser', self.prefDialog))
         else:
-            self.buttons = [ \
-                             { 'id': 'entry_download_path' ,       'editbox': None, 'widget': None , 'window': self.addDialog}, \
-                             { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.addDialog}, \
-                             { 'id': 'entry_move_completed' ,      'editbox': None, 'widget': None , 'window': self.mainWindow}, \
-                             { 'id': 'entry_root_path' ,           'editbox': None, 'widget': None , 'window': self.configPage}, \
-                             { 'id': 'entry_destination' ,         'editbox': None, 'widget': None , 'window': self.moveDialog},
-                             { 'id': 'entry_download_path' ,       'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                             { 'id': 'entry_move_completed_path' , 'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                             { 'id': 'entry_torrents_path' ,       'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                             { 'id': 'entry_autoadd' ,             'editbox': None, 'widget': None , 'window': self.prefDialog}, \
-                           ]
+            self.buttons.append(ButtonRec('entry_download_path' ,       self.addDialog))
+            self.buttons.append(ButtonRec('entry_move_completed_path' , self.addDialog))
+            self.buttons.append(ButtonRec('entry_move_completed' ,      self.mainWindow))
+            self.buttons.append(ButtonRec('entry_root_path' ,           self.configPage))
+            self.buttons.append(ButtonRec('entry_destination' ,         self.moveDialog))
+            self.buttons.append(ButtonRec('entry_download_path' ,       self.prefDialog))
+            self.buttons.append(ButtonRec('entry_move_completed_path' , self.prefDialog))
+            self.buttons.append(ButtonRec('entry_torrents_path' ,       self.prefDialog))
+            self.buttons.append(ButtonRec('entry_autoadd' ,             self.prefDialog))
 
 
-        for button in self.buttons :
-            editbox = self.findEditor(button)
+        for btnRec in self.buttons :
+            editbox = self.findEditor(btnRec)
             if editbox is None:
                 self.handleError()
                 continue
-            button['editbox'] = editbox  
+            btnRec.editbox = editbox  
 
-            btn = self.findButton(button)
+            btn = self.findButton(btnRec)
             if btn is None:
                 self.handleError()
                 continue
 
-            btn.connect("clicked", self.on_browse_button_clicked)
-            log.debug("button connected")
-            button['widget'] = btn
+            log.debug("connecting button to browse dialog:"+btnRec.id)
+            btnRec.click_handler_id = btn.connect("clicked", self.on_browse_button_clicked)
+            log.debug("button connected:"+btnRec.id)
+            btnRec.widget = btn
+        log.debug('all buttons connected.')
 
     def findwidget(self, container, name, verbose):
         result = findwidget(container, name, verbose)
@@ -505,17 +515,17 @@ class BrowseButtonUI(AbstractUI):
         dialog.dialog.destroy()
 
     def on_browse_button_clicked(self, widget):
-        for button in self.buttons :
-            if widget == button['widget']:
-                return self.chooseFolder(button['editbox'], button['window'])
+        for btnRec in self.buttons :
+            if widget == btnRec.widget:
+                return self.chooseFolder(btnRec.editbox, btnRec.window)
 
 if PY3:
     class Gtk3UI_(BrowseButtonUI):
         def getTheme(self):
             return gtk.IconTheme().get_default()
 
-        def findEditor(self, button):
-            hbox = self.findwidget(button['window'], button['id'], False)
+        def findEditor(self, btnRec):
+            hbox = self.findwidget(btnRec.window, btnRec.id, False)
             if hbox is None:
                 return None
             editbox = self.findwidget(hbox, 'entry_text', False)
@@ -523,27 +533,35 @@ if PY3:
                 return None
             return editbox
 
-        def findButton(self, button):
-            hbox = self.findwidget(button['window'], button['id'], False)
+#        def get_handler_id(self, obj, signal_name):
+#            signal_id, detail = gtk.signal_parse_name(signal_name, obj, True)
+#            return gtk.signal_handler_find(obj, GObject.SignalMatchType.ID, signal_id, detail, None, None, None)
+
+        def findButton(self, btnRec):
+            hbox = self.findwidget(btnRec.window, btnRec.id, False)
             if hbox is None:
                 return None
             btn = self.findwidget(hbox, 'button_open_dialog', False)
-            log.debug("disconnecting button ")
+            log.debug("disconnecting old signal from button "+btnRec.id)
             ch = hbox.get_children()
             for widget in ch:
                 if hasattr(widget, '_on_button_open_dialog_clicked'):
-                    button['oldsignal'] = widget._on_button_open_dialog_clicked
-                    btn.disconnect_by_func(button['oldsignal'])
-                    log.debug('button sucessfilly disconnected')
+                    btnRec.oldsignal = widget._on_button_open_dialog_clicked
+                    btn.disconnect_by_func(btnRec.oldsignal)
+                    log.debug('button sucessfilly disconnected:'+ btnRec.id)
             return self.findwidget(hbox, 'button_open_dialog', False)
 
-        def deleteButton(self, button):
-            if button['widget'] is not None:
-                btn = button['widget']
-                btn.disconnect_by_func(self.on_browse_button_clicked)
-                if button['oldsignal'] is not None:
-                    btn.connect("clicked", button['oldsignal'])
-                button['widget'] = None
+        def deleteButton(self, btnRec):
+            if btnRec.widget is not None:
+                log.debug('restoring old signal for button:'+ btnRec.id)
+                btn = btnRec.widget
+                if btnRec.click_handler_id is not None:
+                    btn.disconnect(btnRec.click_handler_id)
+                if btnRec.oldsignal is not None:
+                    btn.connect("clicked", btnRec.oldsignal)
+                    btnRec.oldsignal = None
+                    log.debug('old signal for button restored:'+ btnRec.id)
+                btnRec.widget = None
             return True
 
         def OK(self):
@@ -553,9 +571,9 @@ else:
         def getTheme(self):
             return gtk.icon_theme_get_default()
 
-        def findEditor(self, button):
-            dialog = button['window']
-            id = button['id']
+        def findEditor(self, btnRec):
+            dialog = btnRec.window
+            id = btnRec.id
             if dialog is None:
                 self.error = "window is not set for "+ id +"!"
                 return None
@@ -564,15 +582,14 @@ else:
                 self.error = id + " not found!"
             return editbox
 
-        def findButton(self, button):
+        def findButton(self, btnRec):
             """Adds a Button to the editbox inside hbox container."""
-            if button['editbox'] is None:
-                self.error = "editbox is not set for "+button['id']+"!"
+            if btnRec.editbox is None:
+                self.error = "editbox is not set for "+btnRec.id+"!"
                 return None
-            editbox = button['editbox']
-            hbox = editbox.get_parent()
+            hbox = btnRec.editbox.get_parent()
             if hbox is None:
-                self.error = "hbox not found for "+button['id']+"!"
+                self.error = "hbox not found for "+btnRec.id+"!"
                 return None
             #image = gtk.Image()
             #image.set_from_stock(gtk.STOCK_DIRECTORY,  gtk.ICON_SIZE_BUTTON)
@@ -584,13 +601,13 @@ else:
             btn.show()
             return btn
 
-        def deleteButton(self, button):
-            btn = button['widget']
+        def deleteButton(self, btnRec):
+            btn = btnRec.widget
             if btn is not None:
                 if btn.parent is None:
                     return False
                 btn.parent.remove(btn)
-                button['widget'] = None
+                btnRec.widget = None
             return True
 
         def OK(self):
