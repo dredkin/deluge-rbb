@@ -7,8 +7,8 @@ The **Remote "browse" button** plugin eliminates this drawback by adding `Browse
 ![Image showing preferences pane](https://raw.githubusercontent.com/dredkin/deluge-rbb/master/Images/Preferences.png)
 
 ## Download
-[Download](https://github.com/dredkin/deluge-rbb/releases) .egg files for python 2.6, 2.7 & 3.4.
-If you have another version of python, make an .egg file by running build.sh or build.bat depending on platform.
+[Download](https://github.com/dredkin/deluge-rbb/releases) .egg files for python 2.7, 3.6 & 3.7.
+If you have another version of python, you can make an .egg file by yourself (see **Build** section below).
 
 You must use the egg for the correct version of python of both your server & client.
 To check which version of Python you are using:
@@ -38,7 +38,18 @@ Browse buttons added to:
 ** Also limit directory traversal to this folder & subfolders.
 
 ## Building
-To build yourself you will need to run `python setup.py bdist_egg` to build the egg file.
+If you havn't found an .egg file for your version of python in Releases, you can build it:
+````
+git clone  https://github.com/dredkin/deluge-rbb.git 
+cd deluge-rbb
+python ./setup.py bdist_egg
+````
+The resulting .egg file will be in `dist` subfolder.
+ - If you haven't `git` installed, you can download the sources from `<>Code` page, click "Download Zip" button;
+ - If you have several versions of python on your machine, you can specify the exact version you need: 
+ ````
+ python3.8 ./setup.py bdist_egg
+ ````
 
 ### Unix
 The included `build.sh` file will build the egg file and copy it to the local plugins folder for testing.
