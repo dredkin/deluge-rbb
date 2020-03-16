@@ -18,8 +18,6 @@ To check which version of Python you are using:
 ## Installation
 When running the Deluge daemon, deluged and Deluge client on a separate computers, the plugin must be installed on both computers. When installing the egg through the GTK client it will be placed in the plugins directory of your computer, as well as copied over to the computer running the daemon.
 
-Note: If the Python versions on the server and desktop computer do not match, you will have to copy the egg to the server manually.
-
 For example if you have this setup:
 
 * Windows desktop with Python 2.6 running GTK client.
