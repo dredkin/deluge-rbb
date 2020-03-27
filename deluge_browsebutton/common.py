@@ -8,7 +8,7 @@
 # the OpenSSL library. See LICENSE for more details.
 from __future__ import unicode_literals
 
-import os.path
+import os
 
 from pkg_resources import resource_filename
 
@@ -16,8 +16,10 @@ import sys
 PY3 =  sys.version_info[0] >= 3
 
 def get_resource(filename):
-    if PY3:
-        ext = '.ui'
-    else:
-        ext = '.glade'
+    filename, ext = os.path.splitext(filename)
+    if ext == '':
+        if PY3:
+            ext = '.ui'
+        else:
+            ext = '.glade'
     return resource_filename(__package__, os.path.join('data', filename + ext))
