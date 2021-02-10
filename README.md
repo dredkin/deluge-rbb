@@ -43,7 +43,7 @@ cd deluge-rbb
 python ./setup.py bdist_egg
 ````
 The resulting .egg file will be in `dist` subfolder.
- - If you haven't `git` installed, you can download the sources from `<>Code` page, click "Download Zip" button;
+ - If you haven't `git` installed, you can download the sources from `<>Code` page, click `⬇Code`button and then "Download Zip" ;
  - If you have several versions of python on your machine, you can specify the exact version you need: 
  ````
  python3.8 ./setup.py bdist_egg
