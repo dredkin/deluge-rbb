@@ -55,7 +55,7 @@ else:
 from deluge.ui.client import client
 import deluge.component as component
 import deluge.common
-import abc;
+import abc
 
 
 importError = None
@@ -194,14 +194,21 @@ class BrowseDialog:
         self.label.handler_unblock(self.handler_id)
 
         if not results[1]:
-            pixbuf = getTheme().load_icon("go-up", 24, 0)
+            try:
+                pixbuf = getTheme().load_icon("go-up", 24, 0)
+            except:
+                pixbuf = None
+                
             self.liststore.append([pixbuf, ".."])
         subfolders = []
         for folder in results[2]:
             subfolders.append(folder)
         subfolders.sort(key=caseInsensitive)
         for folder in subfolders:
-            pixbuf = getTheme().load_icon("folder", 24, 0)
+            try:
+                pixbuf = getTheme().load_icon("folder", 24, 0)
+            except:
+                pixbuf = None
             self.liststore.append([pixbuf, folder])
         #self.iconview.set_item_width(-1)
 
