@@ -1,3 +1,6 @@
+## Development stopped
+I have to admit that the recent (2.x versions) of Deluge server eat enormous amount of memory on my machine, so I was forced to stop my deluge server and switch to [transmission](https://transmissionbt.com/). And now I have no motivation in developing the plugin. Though Deluge (with plugins) offers some unique functionality, at this point our paths have diverged. If you have some serious bugs you may try to contact me, I'll help you if I can.
+
 # Remote "browse" button for Deluge
 This is a plugin for [Deluge](http://deluge-torrent.org) torrent client.
 By default, when started in **client-server mode**, Deluge has no option to choose destination folder for download, you have to enter it by hand.
